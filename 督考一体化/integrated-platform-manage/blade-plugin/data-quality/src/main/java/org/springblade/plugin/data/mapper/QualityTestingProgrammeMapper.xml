@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.plugin.data.mapper.QualityTestingProgrammeMapper">
+	<!-- QualityTestingProgramme的resultMap,column是给数据库列起的别名,它对应property类的属性 -->
+	<resultMap id="result_QualityTestingProgramme_Map" type="org.springblade.plugin.data.entity.QualityTestingProgramme">
+		<id column="id" property="id" />
+		<result column="name" property="name" />
+		<result column="cycle" property="cycle" />
+		<result column="time" property="time" />
+		<result column="week" property="week" />
+		<result column="datetime" property="datetime" />
+		<result column="month" property="month" />
+		<result column="date" property="date" />
+		<result column="sync" property="sync" />
+		<result column="plan_task" property="planTask" />
+		<result column="description" property="description" />
+		<result column="notify" property="notify" />
+		<result column="notify_user" property="notifyUser" />
+		<result column="notice_content" property="noticeContent" />
+		<result column="model_id" property="modelId" />
+		<result column="job_id" property="jobId" />
+		<result column="create_user" property="createUser" />
+		<result column="create_dept" property="createDept" />
+		<result column="create_time" property="createTime" />
+		<result column="update_user" property="updateUser" />
+		<result column="update_time" property="updateTime" />
+		<result column="status" property="status" />
+		<result column="is_deleted" property="isDeleted" />
+	</resultMap>
+
+    <resultMap id="treeNodeResultMap" type="org.springblade.core.tool.node.TreeNode">
+        <id column="id" property="id"/>
+        <result column="parent_id" property="parentId"/>
+        <result column="title" property="title"/>
+        <result column="value" property="value"/>
+        <result column="key" property="key"/>
+        <result column="has_children" property="hasChildren"/>
+    </resultMap>
+
+    <select id="getModelProgrammeTree" resultMap="treeNodeResultMap">
+        select id,0 parent_id, model_name as title, id as "value", id as "key" from business_model where is_deleted = 0
+        union all
+        select id,model_id as parent_id, `name` as title, id as "value", id as "key" from quality_testing_programme where is_deleted = 0
+    </select>
+</mapper>

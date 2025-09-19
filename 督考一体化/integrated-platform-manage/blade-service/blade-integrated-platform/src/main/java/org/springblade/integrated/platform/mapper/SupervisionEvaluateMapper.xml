@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.integrated.platform.mapper.SupervisionEvaluateMapper">
+  <resultMap id="BaseResultMap" type="com.vingsoft.entity.SupervisionEvaluate">
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="serv_code" jdbcType="VARCHAR" property="servCode" />
+    <result column="evaluate_user" jdbcType="VARCHAR" property="evaluateUser" />
+    <result column="evaluate_user_name" jdbcType="VARCHAR" property="evaluateUserName" />
+    <result column="evaluated_dept" jdbcType="VARCHAR" property="evaluatedDept" />
+    <result column="evaluated_dept_name" jdbcType="VARCHAR" property="evaluatedDeptName" />
+    <result column="result" jdbcType="VARCHAR" property="result" />
+    <result column="evaluate_time" jdbcType="TIMESTAMP" property="evaluateTime" />
+  </resultMap>
+  <resultMap extends="BaseResultMap" id="ResultMapWithBLOBs" type="com.vingsoft.entity.SupervisionEvaluate">
+    <result column="remark" jdbcType="LONGVARCHAR" property="remark" />
+  </resultMap>
+
+
+
+  <select id="queryDcdbList" resultType="com.vingsoft.vo.SupervisionEvaluateVo" >
+          <!-- 承办总数-->
+          select distinct A.deptid,ifnull(A.cbnum,0) cbnum,ifnull(B.ywcnum,0) ywcnum,ifnull(C.zctjnum,0) zctjnum,ifnull(D.ycqnum,0) ycqnum,ifnull(E.score,0) score from (
+          SELECT count(sign.sign_dept) cbnum,sign.sign_dept deptid
+          from supervision_sign sign left join supervision_info info on sign.serv_id=info.id
+         <where>
+             date_format(sign.create_time,'%Y')=#{year} and sign.sign_dept in
+             <foreach collection="ids"  index="index" item="item" open="(" separator="," close=")">
+                 #{item}
+             </foreach>
+         </where>
+         group by sign.sign_dept
+        ) A
+      LEFT JOIN (
+      <!-- 已完成数量-->
+      select count(sign.sign_dept) ywcnum,sign.sign_dept deptid
+      from supervision_sign sign left join supervision_info info on sign.serv_id=info.id
+      <where>
+          date_format(sign.create_time,'%Y')=#{year} and info.flow_status='4' and sign.sign_dept in
+          <foreach collection="ids"  index="index" item="item" open="(" separator="," close=")">
+              #{item}
+          </foreach>
+      </where>
+      group by sign.sign_dept) B ON A.deptid=B.deptid
+      LEFT JOIN (
+      <!-- 正常推进数量-->
+      select count(sign.sign_dept) zctjnum,sign.sign_dept deptid
+      from supervision_sign sign left join supervision_info info on sign.serv_id=info.id
+      <where>
+          date_format(sign.create_time,'%Y')=#{year} and info.flow_status='3' and sign.sign_dept in
+          <foreach collection="ids"  index="index" item="item" open="(" separator="," close=")">
+              #{item}
+          </foreach>
+      </where>
+      group by sign.sign_dept) C ON A.deptid=C.deptid
+      LEFT JOIN (
+      <!-- 已超期数量-->
+      select count(*) ycqnum ,sign.sign_dept deptid from supervision_sign sign
+      left join supervision_info info on info.id=sign.serv_id
+      left join supervision_phase_report report on report.serv_code=info.serv_code and report.report_dept=CAST(sign.sign_dept as CHAR(50))
+      left join supervision_phase_report_all reportAll on reportAll.serv_code=info.serv_code and report.report_dept=CAST(sign.sign_dept as CHAR(50))
+
+      <where>
+           ((sign.sign_status='0' and date_format(info.wcsx, '%Y-%m-%d') <![CDATA[<]]>date_format(now(), '%Y-%m-%d'))
+          or
+          (report.report_status in("0","3","4","6") and report.Status!=2 and report.remind_report_time<![CDATA[<]]>now())
+          or
+          (sign.sign_status='1' and sign.dept_type='lead' and reportAll.id is null and (info.duty_unit!='' or info.duty_unit is not  null )  and date_format(info.wcsx, '%Y-%m-%d') <![CDATA[<]]> date_format(now(), '%Y-%m-%d') )
+          )
+
+          and date_format(sign.create_time,'%Y')=#{year}
+          and sign.sign_dept in
+          <foreach collection="ids"  index="index" item="item" open="(" separator="," close=")">
+              #{item}
+          </foreach>
+      </where>
+      group by sign.sign_dept) D ON A.deptid=D.deptid
+      <!-- 得分-->
+      left join (
+      select sign.sign_dept as deptid, ifnull(e.score, 0) as score from supervision_sign sign
+      left join supervision_info info on sign.serv_id=info.id
+      left join supervision_evaluate e on e.serv_code=info.serv_code
+      <where>
+          date_format(sign.create_time,'%Y')=#{year}
+          and sign.sign_dept in
+          <foreach collection="ids"  index="index" item="item" open="(" separator="," close=")">
+              #{item}
+          </foreach>
+      </where>
+      order by score DESC
+      ) E on A.deptid=E.deptid
+  </select>
+</mapper>

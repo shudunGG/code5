@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.integrated.platform.mapper.AnnualAssessmentMapper">
+
+    <select id="exportZzsxjsAssessment" resultType="org.springblade.integrated.platform.excel.ZzsxjsExcel">
+        <!-- 如有需要可以加上条件 where id= #{qw.id} -->
+        select appraise_Classify_Name,major_target,appraise_object,appraise_deptname,weight,finish_date,case when target_status='0' then '暂存'
+        when target_status='1' then '进行中' when target_status='2' then '已完成' end as target_status
+        from annual_assessment where project_id=#{projectId}
+    </select>
+
+    <select id="exportLdnlAssessment" resultType="org.springblade.integrated.platform.excel.LdnlExcel">
+        <!-- 如有需要可以加上条件 where id= #{qw.id} -->
+        select appraise_Classify_Name,major_target,appraise_object,appraise_deptname,weight,finish_date,case when target_status='0' then '暂存'
+        when target_status='1' then '进行中' when target_status='2' then '已完成' end as target_status
+        from annual_assessment where project_id=#{projectId}
+    </select>
+
+    <select id="exportDdjsAssessment" resultType="org.springblade.integrated.platform.excel.DdjsExcel">
+        <!-- 如有需要可以加上条件 where id= #{qw.id} -->
+        select appraise_Classify_Name,major_target,appraise_object,appraise_deptname,weight,finish_date,case when target_status='0' then '暂存'
+        when target_status='1' then '进行中' when target_status='2' then '已完成' end as target_status
+        from annual_assessment where project_id=#{projectId}
+    </select>
+
+    <select id="exportSgzlfzAssessment" resultType="org.springblade.integrated.platform.excel.SgzlfzExcel">
+        <!-- 如有需要可以加上条件 where id= #{qw.id} -->
+        select project_name,appraise_Classify_Name,major_target,appraise_object,appraise_deptname,weight,finish_date,case when target_status='0' then '暂存'
+        when target_status='1' then '进行中' when target_status='2' then '已完成' end as target_status
+        from annual_assessment where project_id=#{projectId}
+    </select>
+
+    <select id="exportQxgzlfzAssessment" resultType="org.springblade.integrated.platform.excel.QxgzlfzExcel">
+        <!-- 如有需要可以加上条件 where id= #{qw.id} -->
+        select appraise_Classify_Name,project_name,major_target,appraise_object,appraise_deptname,
+               ganzhouqu,linzexian,gaotaixian,shandanxian,minlexian,sunanxian,finish_date,case when target_status='0' then '暂存'
+        when target_status='1' then '进行中' when target_status='2' then '已完成' end as target_status
+        from annual_assessment where project_id=#{projectId}
+    </select>
+
+</mapper>

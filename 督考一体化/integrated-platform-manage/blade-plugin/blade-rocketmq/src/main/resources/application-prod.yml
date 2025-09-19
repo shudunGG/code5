@@ -1,0 +1,15 @@
+#服务器端口
+server:
+  port: 6789
+
+#数据源配置
+spring:
+  datasource:
+    url: ${blade.datasource.rocketmq.prod.url}
+    username: ${blade.datasource.rocketmq.prod.username}
+    password: ${blade.datasource.rocketmq.prod.password}
+
+#是否开启mq
+rocketmq:
+  producer:
+    isEnable: true

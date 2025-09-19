@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="busiMapper">
+
+
+	<select id="searchDocumentList" resultType="hashmap" parameterType="hashmap">
+		select 	a.DOC_PK,a.CHANNEL_PK,a.TITLE,FIRST_PAGE_TITLE,a.SOURCE,
+				WRITE_TIME,LEFT(CONTENT,200) AS CONTENT,TOP_TITLE,BUTTOM_TITLE,
+				AUTHOR,KEYWORDS,ABSTRACTS,SOURCE_URL,a.C_USER,
+				a.C_TIME,a.VERSION_NO,a.STS,PUB_URL,PUB_FILE_NAME,
+				a.PUB_TIME,a.TMPLATE_ID,a.U_USER,a.U_TIME,a.DOC_TYPE,
+				a.LINK_URL,a.SITE_PK,TITLE_HTML,FP_TITLE_HTML,
+				DATE_FORMAT(a.C_TIME, '%Y-%m-%d %H:%i:%s') AS C_TIME_STR,
+				DATE_FORMAT(a.U_TIME, '%Y-%m-%d %H:%i:%s') AS U_TIME_STR,
+				DATE_FORMAT(a.PUB_TIME, '%Y-%m-%d %H:%i:%s') AS PUB_TIME_STR,
+				a.VOICE_URL,a.HIT_COUNT
+		from busi_document_def a
+		where 1=1
+		<if test="SITE_CODE != null">
+			AND SITE_PK IN(SELECT SITE_PK FROM busi_site_def where site_code=#{SITE_CODE})
+		</if>
+		<if test="SEARCH_TIME != null">
+			AND PUB_TIME &gt;= #{START_TIME} AND PUB_TIME &lt;= #{END_TIME}
+		</if>
+		<if test="SEARCH_SCALE_TITLE != null">
+			AND (TITLE like '%${QUERY_NAME}%' or FIRST_PAGE_TITLE like '%${QUERY_NAME}%'
+			or TOP_TITLE like '%${QUERY_NAME}%' or BUTTOM_TITLE like '%${QUERY_NAME}%'
+			or KEYWORDS like '%${QUERY_NAME}%'
+			)
+		</if>
+		<if test="SEARCH_SCALE_CONTENT != null">
+			AND (CONTENT like '%${QUERY_NAME}%' or ABSTRACTS like '%${QUERY_NAME}%'
+			)
+		</if>
+		<if test="SEARCH_SCALE_ALL != null">
+			AND (TITLE like '%${QUERY_NAME}%' or FIRST_PAGE_TITLE like '%${QUERY_NAME}%'
+			or TOP_TITLE like '%${QUERY_NAME}%' or BUTTOM_TITLE like '%${QUERY_NAME}%'
+			or KEYWORDS like '%${QUERY_NAME}%' or ABSTRACTS like '%${QUERY_NAME}%'
+			or CONTENT like '%${QUERY_NAME}%'
+			)
+		</if>
+		<if test="ORDER_TIME != null">
+			order by a.U_TIME desc
+		</if>
+		<if test="ORDER_HIT_COUNT != null">
+			order by a.HIT_COUNT desc
+		</if>
+		<if test="DATA_LIMIT != null">
+			LIMIT ${START_POS},${PAGE_SIZE}
+		</if>
+	</select>
+
+
+	<select id="searchDocumentCount" resultType="hashmap" parameterType="hashmap">
+		select 	count(*)  as TOTAL
+		from busi_document_def a
+		where 1=1
+		<if test="SEARCH_TIME != null">
+			AND PUB_TIME &gt;= #{START_TIME} AND PUB_TIME &lt;= #{END_TIME}
+		</if>
+		<if test="SEARCH_SCALE_TITLE != null">
+			AND (TITLE like '%${QUERY_NAME}%' or FIRST_PAGE_TITLE like '%${QUERY_NAME}%'
+			or TOP_TITLE like '%${QUERY_NAME}%' or BUTTOM_TITLE like '%${QUERY_NAME}%'
+			or KEYWORDS like '%${QUERY_NAME}%'
+			)
+		</if>
+		<if test="SEARCH_SCALE_CONTENT != null">
+			AND (CONTENT like '%${QUERY_NAME}%' or ABSTRACTS like '%${QUERY_NAME}%'
+			)
+		</if>
+		<if test="SEARCH_SCALE_ALL != null">
+			AND (TITLE like '%${QUERY_NAME}%' or FIRST_PAGE_TITLE like '%${QUERY_NAME}%'
+			or TOP_TITLE like '%${QUERY_NAME}%' or BUTTOM_TITLE like '%${QUERY_NAME}%'
+			or KEYWORDS like '%${QUERY_NAME}%' or ABSTRACTS like '%${QUERY_NAME}%'
+			or CONTENT like '%${QUERY_NAME}%'
+			)
+		</if>
+	</select>
+
+
+</mapper>
+

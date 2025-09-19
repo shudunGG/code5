@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.integrated.platform.mapper.SupervisionFilesMapper">
+  <resultMap id="BaseResultMap" type="com.vingsoft.entity.SupervisionFiles">
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="serv_code" jdbcType="VARCHAR" property="servCode" />
+    <result column="file_name" jdbcType="VARCHAR" property="fileName" />
+    <result column="file_size" jdbcType="VARCHAR" property="fileSize" />
+    <result column="file_from" jdbcType="VARCHAR" property="fileFrom" />
+    <result column="upload_user" jdbcType="VARCHAR" property="uploadUser" />
+    <result column="upload_user_name" jdbcType="VARCHAR" property="uploadUserName" />
+    <result column="upload_time" jdbcType="TIMESTAMP" property="uploadTime" />
+    <result column="file_url" jdbcType="CHAR" property="fileUrl" />
+    <result column="phase_id" jdbcType="BIGINT" property="phaseId" />
+  </resultMap>
+  <sql id="Base_Column_List">
+    id, serv_code, file_name, file_size, file_from, upload_user, upload_user_name, upload_time,
+    file_url, phase_id
+  </sql>
+
+</mapper>

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.system.user.mapper.UserMapper">
+
+    <!-- 通用查询映射结果 -->
+    <resultMap id="userResultMap" type="org.springblade.system.user.entity.User">
+        <result column="id" property="id"/>
+        <result column="tenant_id" property="tenantId"/>
+        <result column="create_user" property="createUser"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_user" property="updateUser"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="status" property="status"/>
+        <result column="is_deleted" property="isDeleted"/>
+        <result column="code" property="code"/>
+        <result column="user_type" property="userType"/>
+        <result column="account" property="account"/>
+        <result column="password" property="password"/>
+        <result column="name" property="name" typeHandler="org.springblade.system.user.mybatis.SM4EncryptHandler"/>
+        <result column="real_name" property="realName" typeHandler="org.springblade.system.user.mybatis.SM4EncryptHandler"/>
+        <result column="email" property="email" typeHandler="org.springblade.system.user.mybatis.SM4EncryptHandler"/>
+        <result column="phone" property="phone" typeHandler="org.springblade.system.user.mybatis.SM4EncryptHandler"/>
+        <result column="birthday" property="birthday"/>
+        <result column="sex" property="sex"/>
+        <result column="role_id" property="roleId"/>
+        <result column="dept_id" property="deptId"/>
+        <result column="post_id" property="postId"/>
+    </resultMap>
+    <update id="updateUserLoginCount">
+        update blade_user set login_count = login_count+1,last_login_time = now() where account = #{account}
+    </update>
+
+    <select id="selectUserPage" resultMap="userResultMap">
+        select * from blade_user where is_deleted = 0
+        <if test="tenantId!=null and tenantId != ''">
+            and tenant_id = #{tenantId}
+        </if>
+        <if test="user.tenantId!=null and user.tenantId != ''">
+            and tenant_id = #{user.tenantId}
+        </if>
+        <if test="user.account!=null and user.account != ''">
+            and account = #{user.account}
+        </if>
+        <if test="user.realName!=null and user.realName != ''">
+            and (real_name like CONCAT('%', #{user.realName}, '%') or phone like CONCAT('%', #{user.realName}, '%'))
+        </if>
+        <if test="user.userType!=null and user.userType != ''">
+            and user_type = #{user.userType}
+        </if>
+        <if test="deptIdList!=null and deptIdList.size>0">
+            and id in (
+            SELECT
+            user_id
+            FROM
+            blade_user_dept
+            WHERE
+            dept_id IN
+            <foreach collection="deptIdList" index="index" item="item" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+            )
+        </if>
+        ORDER BY sort ASC
+    </select>
+
+    <select id="getUser" resultMap="userResultMap">
+        SELECT
+            *
+        FROM
+            blade_user
+        WHERE
+            tenant_id = #{param1} and account = #{param2} and is_deleted = 0
+    </select>
+
+    <select id="exportUser" resultType="org.springblade.system.user.excel.UserExcel">
+        SELECT id, tenant_id, user_type, account, name, real_name, email, phone, birthday, role_id, dept_id, post_id FROM blade_user ${ew.customSqlSegment}
+    </select>
+
+    <select id="getPhones" parameterType="java.lang.String" resultType="java.lang.String">
+        select phone from blade_user where is_deleted = 0
+        <if test="names != null and names.size() > 0">
+            and name in
+            <foreach collection="names" item="name" index="index" open="(" separator="," close=")">
+                #{name}
+            </foreach>
+        </if>
+    </select>
+</mapper>

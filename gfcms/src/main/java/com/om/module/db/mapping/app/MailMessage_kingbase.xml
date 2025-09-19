@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="busiMapper_kingBase">
+
+	<select id="queryBusiAppMailMsg" resultType="hashmap" parameterType="hashmap">
+		select  MSG_PK,SITE_PK,BOX_NAME,M_TITLE,M_CONTENT,
+		LINK_MAN,LINK_PHONE,STS,IS_OPEN,REPLY_CONTENT,
+		AUDIT_USER,AUDIT_TIME,AUDIT_OPINION,REPLY_USER,REPLY_TIME,
+		AUDIT_USER_NAME,REPLY_USER_NAME,CREATE_TIME,
+		to_char(CREATE_TIME,'yyyy-MM-dd hh24:mi:ss') AS CREATE_TIME_STR,
+		to_char(AUDIT_TIME,'yyyy-MM-dd hh24:mi:ss') AS AUDIT_TIME_STR,
+		to_char(REPLY_TIME,'yyyy-MM-dd hh24:mi:ss') AS REPLY_TIME_STR
+		from busi_app_mail_msg a
+		where 1=1
+		<if test="MSG_PK != null">
+			AND MSG_PK = #{MSG_PK}
+		</if>
+		<if test="SITE_CODE != null">
+			AND SITE_PK IN(SELECT SITE_PK FROM busi_site_def WHERE site_code=#{SITE_CODE})
+		</if>
+		<if test="BOX_NAME != null">
+			AND BOX_NAME = #{BOX_NAME}
+		</if>
+		<if test="STS != null">
+			AND STS = #{STS}
+		</if>
+		<if test="QUERY_NAME != null">
+			AND (M_TITLE like '%${QUERY_NAME}%' or M_CONTENT like '%${QUERY_NAME}%'
+			)
+		</if>
+		<if test="LINK_MAN != null">
+			AND LINK_MAN like '%${LINK_MAN}%'
+		</if>
+		<if test="LINK_PHONE != null">
+			AND LINK_PHONE like '%${LINK_PHONE}%'
+		</if>
+		<if test="IS_OPEN != null">
+			AND IS_OPEN = #{IS_OPEN}
+		</if>
+		<if test="AUDIT_USER_NAME != null">
+			AND AUDIT_USER_NAME like '%${AUDIT_USER_NAME}%'
+		</if>
+		<if test="REPLY_USER_NAME != null">
+			AND REPLY_USER_NAME like '%${REPLY_USER_NAME}%'
+		</if>
+		order by CREATE_TIME desc
+		<if test="DATA_LIMIT != null">
+			LIMIT ${START_POS},${PAGE_SIZE}
+		</if>
+	</select>
+
+</mapper>
+

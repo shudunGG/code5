@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="busiMapper">
+ 	<select id="queryXjTjjSearchList" resultType="hashmap" parameterType="hashmap">
+		SELECT DOCTITLE,DOCRELTIME,DOCPUBURL,
+		DATE_FORMAT(DOCRELTIME, '%Y-%m-%d %H:%i:%s') AS DOCRELTIME_STR
+		FROM WCMDOCUMENT
+		WHERE DOCSTATUS=10
+		AND SITEID=#{SITEID}
+		<if test="KEY_WORD != null and KEY_WORD != ''">
+			AND (DOCTITLE like '%${KEY_WORD}%')
+		</if>
+		order by DOCRELTIME desc
+		<if test="DATA_LIMIT != null">
+			LIMIT ${START_POS},${PAGE_SIZE}
+		</if>
+	</select>
+
+	<select id="queryXjTjjSearchTotal" resultType="hashmap" parameterType="hashmap">
+		SELECT count(*) as TOTAL
+		FROM WCMDOCUMENT
+		WHERE DOCSTATUS=10
+		AND SITEID=#{SITEID}
+		<if test="KEY_WORD != null and KEY_WORD != ''">
+			AND (DOCTITLE like '%${KEY_WORD}%')
+		</if>
+	</select>
+
+
+</mapper>
+

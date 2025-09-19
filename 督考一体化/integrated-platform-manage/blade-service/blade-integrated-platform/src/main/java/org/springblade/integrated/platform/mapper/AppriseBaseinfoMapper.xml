@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.integrated.platform.mapper.AppriseBaseinfoMapper">
+
+    <select id="QuarterBaseInfoList" parameterType="com.vingsoft.vo.QuarterBaseInfoVO" resultType="com.vingsoft.vo.QuarterBaseInfoVO">
+        /*select qe.id qeid,qss.id qssid,ad.id adid,qe.jdzb_name,qe.jdzb_type,first_target,major_target,qe.appraise_deptname,weight,qss.quarterly_sum_score,
+        qss.responsible_unit_name,ad.scoring_description from quarterly_evaluation qe
+        inner join quarterly_sum_score qss inner join apprise_dept ad  on qe.id = qss.quarterly_evaluation_id
+        and  ad.responsible_unit_id=qss.responsible_unit_id*/
+        select qe.jdzb_type,qe.jdzb_name,qe.first_target,qe.major_target,qs.quarterly_evaluation_id,qs.check_classify,
+               qs.check_classify_name,qs.appraise_deptid,qs.appraise_deptname,qs.responsible_unit_id,
+               qs.responsible_unit_name,qs.stage,qs.stage_year,qs.quarterly_sum_score,qs.create_user,
+               qs.create_dept,qs.create_time,qe.two_target,qe.weight,qs.gzsj_score gzsjScore  from quarterly_sum_score qs
+               inner join quarterly_evaluation qe on qs.quarterly_evaluation_id=qe.id
+
+        <if test="quarter != null and quarter!='' ">
+            and qs.stage=#{quarter}
+        </if>
+        <if test="stageYear != null and stageYear!='' ">
+            and qs.stage_year=#{stageYear}
+        </if>
+        <if test="jdzbType != null and jdzbType!='' ">
+            and qe.jdzb_type=#{jdzbType}
+        </if>
+        <if test="majorTarget != null and majorTarget!='' ">
+            and qe.major_target like CONCAT('%',#{majorTarget},'%')
+        </if>
+        <if test="appraiseDeptid != null and appraiseDeptid!='' ">
+            and qs.appraise_deptid in(#{appraiseDeptid})
+        </if>
+        <if test="firstTarget != null and firstTarget!='' ">
+            and qe.first_target =#{firstTarget}
+        </if>
+        <if test="responsibleUnitId != null and responsibleUnitId!='' ">
+            and qs.responsible_unit_id in(#{responsibleUnitId})
+        </if>
+        and qe.is_deleted = '0'
+        and qs.is_deleted = '0'
+        order by qe.jdzb_type asc
+        /*and qs.is_send=1*/
+        /*group by jdzb_name,qss.responsible_unit_name*/
+    </select>
+
+    <select id="AnnualBaseInfoList" parameterType="com.vingsoft.vo.AnnualBaseInfoVO" resultType="com.vingsoft.vo.AnnualBaseInfoVO">
+        /*select ae.id qeid,ass.id qssid,ad.id adid,ae.project_name,ae.project_id projectType,serv_name,ae.appraise_deptname,weight,ass.annual_sum_score,
+        ass.responsible_unit_name,ad.scoring_description from annual_evaluation ae
+        inner join annual_sum_score ass inner join apprise_dept ad  on ae.id = ass.annual_evaluation_id
+        and  ad.responsible_unit_id=ass.responsible_unit_id*/
+        select ae.type,ae.project_id,ae.project_name,ae.major_target,ass.annual_evaluation_id,ass.check_classify,
+        ass.check_classify_name,ass.appraise_deptid,ass.appraise_deptname,ass.responsible_unit_id,
+        ass.responsible_unit_name,ass.annual_year,ass.serv_name,ass.annual_sum_score,ass.create_user,
+        ass.create_dept,ass.create_time,ae.weight  from annual_sum_score ass
+        inner join annual_evaluation ae on ass.annual_evaluation_id=ae.id
+
+        <if test="annualYear != null and annualYear!='' ">
+            and ass.annual_year=#{annualYear}
+        </if>
+        <if test="projectId != null and projectId!='' ">
+            and ae.project_id=#{projectId}
+        </if>
+        <if test="projectName != null and projectName!='' ">
+            and ae.project_name like CONCAT('%',#{projectName},'%')
+        </if>
+        <if test="servName != null and servName!='' ">
+            and ass.serv_name like CONCAT('%',#{servName},'%')
+        </if>
+        <if test="appraiseDeptid != null and appraiseDeptid!='' ">
+            and ass.appraise_deptid in(#{appraiseDeptid})
+        </if>
+        <if test="responsibleUnitId != null and responsibleUnitId!='' ">
+            and ass.responsible_unit_id in(#{responsibleUnitId})
+        </if>
+
+        <if test="type != null and type!='' ">
+            and ae.type=#{type}
+        </if>
+        and ass.is_send=1
+       /* group by project_name,ass.responsible_unit_name*/
+    </select>
+
+</mapper>

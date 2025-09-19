@@ -1,0 +1,333 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="busiMapper">
+	<!--对文档附件的增、删、改、查-->
+	<insert id="saveBusiDocumentFile" parameterType="hashmap">
+		INSERT INTO busi_document_file(
+			FILE_PK,SITE_PK,CHANNEL_PK,DOCUMENT_PK,SHOW_SEQ,
+			FILE_TYPE,FILE_NAME_EXT,FILE_NAME_INIT,FILE_NAME_NEW,FILE_PATH_ROOT,
+			FILE_PATH_CONTEXT,FILE_PATH_URL,U_USER,U_TIME,FILE_LENGTH,IS_DEPLOY
+
+		)VALUES(
+			#{FILE_PK},#{SITE_PK,jdbcType=VARCHAR},#{CHANNEL_PK,jdbcType=VARCHAR},#{DOCUMENT_PK},#{SHOW_SEQ,jdbcType=VARCHAR},
+			#{FILE_TYPE},#{FILE_NAME_EXT},#{FILE_NAME_INIT},#{FILE_NAME_NEW},#{FILE_PATH_ROOT},
+			#{FILE_PATH_CONTEXT},#{FILE_PATH_URL,jdbcType=VARCHAR},#{U_USER},now(),#{FILE_LENGTH},#{IS_DEPLOY}
+
+		)
+    </insert>
+
+	<delete id="deleteBusiDocumentFile" parameterType="hashmap">
+		delete from busi_document_file where FILE_PK = #{FILE_PK}
+    </delete>
+
+	<update id="updateBusiDocumentFile" parameterType="hashmap">
+		update busi_document_file
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="SITE_PK != null">SITE_PK=#{SITE_PK},</if>
+			<if test="CHANNEL_PK != null">CHANNEL_PK=#{CHANNEL_PK},</if>
+			<if test="DOCUMENT_PK != null">DOCUMENT_PK=#{DOCUMENT_PK},</if>
+			<if test="SHOW_SEQ != null">SHOW_SEQ=#{SHOW_SEQ},</if>
+		</trim>
+		WHERE FILE_PK = #{FILE_PK}
+	</update>
+
+	<update id="fillBusiDocumentPKByFilePk" parameterType="hashmap">
+		update busi_document_file set DOCUMENT_PK=#{DOC_PK} WHERE FILE_PK in(${FILE_PK_ARR})
+	</update>
+
+	<update id="updateDocumentFileUrlByPk" parameterType="hashmap">
+		update busi_document_file set FILE_PATH_URL=#{FILE_PATH_URL} WHERE FILE_PK = #{FILE_PK}
+	</update>
+
+	<select id="queryBusiDocumentFile" resultType="hashmap" parameterType="hashmap">
+		select 	FILE_PK,SITE_PK,CHANNEL_PK,DOCUMENT_PK,SHOW_SEQ,
+				FILE_TYPE,FILE_NAME_EXT,FILE_NAME_INIT,FILE_NAME_NEW,FILE_PATH_ROOT,
+				FILE_PATH_CONTEXT,FILE_PATH_URL,U_USER,U_TIME,FILE_LENGTH
+		from busi_document_file
+		where 1=1
+		<if test="FILE_PK != null">
+			AND FILE_PK = #{FILE_PK}
+		</if>
+		<if test="DOCUMENT_PK != null">
+			AND DOCUMENT_PK = #{DOCUMENT_PK}
+		</if>
+		<if test="SITE_PK != null">
+			AND SITE_PK = #{SITE_PK}
+		</if>
+		<if test="CHANNEL_PK != null">
+			AND CHANNEL_PK = #{CHANNEL_PK}
+		</if>
+		<if test="FILE_TYPE != null">
+			AND FILE_TYPE = #{FILE_TYPE}
+		</if>
+		<if test="U_USER != null">
+			AND U_USER = #{U_USER}
+		</if>
+		<if test="QUERY_NAME != null">
+			AND (FILE_NAME_INIT like '%${QUERY_NAME}%' or FILE_NAME_NEW like '%${QUERY_NAME}%' )
+		</if>
+	</select>
+
+
+
+	<!--对文档的增、删、改、查-->
+	<insert id="saveBusiDocumentDef" parameterType="hashmap">
+		INSERT INTO busi_document_def(
+			DOC_PK,CHANNEL_PK,TITLE,FIRST_PAGE_TITLE,SOURCE,
+			WRITE_TIME,CONTENT,CONTENT_HTML,TOP_TITLE,BUTTOM_TITLE,
+			AUTHOR,KEYWORDS,ABSTRACTS,SOURCE_URL,C_USER,
+			C_TIME,VERSION_NO,STS,PUB_URL,PUB_FILE_NAME,
+			PUB_TIME,TMPLATE_ID,DOC_TYPE,LINK_URL,
+			U_USER,U_TIME,SITE_PK,TITLE_HTML,FP_TITLE_HTML,
+			IS_DEPLOY
+		)VALUES(
+			#{DOC_PK},#{CHANNEL_PK},#{TITLE},#{FIRST_PAGE_TITLE,jdbcType=VARCHAR},#{SOURCE,jdbcType=VARCHAR},
+			#{WRITE_TIME,jdbcType=VARCHAR},#{CONTENT,jdbcType=VARCHAR},#{CONTENT_HTML,jdbcType=VARCHAR},#{TOP_TITLE,jdbcType=VARCHAR},#{BUTTOM_TITLE,jdbcType=VARCHAR},
+			#{AUTHOR,jdbcType=VARCHAR},#{KEYWORDS,jdbcType=VARCHAR},#{ABSTRACTS,jdbcType=VARCHAR},#{SOURCE_URL,jdbcType=VARCHAR},#{C_USER},
+			now(),0,#{STS},#{PUB_URL,jdbcType=VARCHAR},#{PUB_FILE_NAME,jdbcType=VARCHAR},
+			#{PUB_TIME},#{TMPLATE_ID},#{DOC_TYPE},#{LINK_URL,jdbcType=VARCHAR},
+			#{C_USER},now(),#{SITE_PK},#{TITLE_HTML},#{FP_TITLE_HTML,jdbcType=VARCHAR},
+			0
+		)
+    </insert>
+
+	<delete id="deleteBusiDocumentDef" parameterType="hashmap">
+		delete from busi_document_def where DOC_PK = #{DOC_PK}
+    </delete>
+	<delete id="deleteBusiDocumentDefBat" parameterType="hashmap">
+		delete from busi_document_def where DOC_PK in( ${DOC_PK_ARR} )
+    </delete>
+
+	<update id="updateBusiDocumentDef" parameterType="hashmap">
+		update busi_document_def
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="TITLE != null">TITLE=#{TITLE},</if>
+			<if test="FIRST_PAGE_TITLE != null">FIRST_PAGE_TITLE=#{FIRST_PAGE_TITLE},</if>
+			<if test="TITLE_HTML != null">TITLE_HTML=#{TITLE_HTML},</if>
+			<if test="FP_TITLE_HTML != null">FP_TITLE_HTML=#{FP_TITLE_HTML},</if>
+			<if test="SOURCE != null">SOURCE=#{SOURCE},</if>
+			<if test="CONTENT != null">CONTENT=#{CONTENT},</if>
+			<if test="CONTENT_HTML != null">CONTENT_HTML=#{CONTENT_HTML},</if>
+			<if test="TOP_TITLE != null">TOP_TITLE=#{TOP_TITLE},</if>
+			<if test="BUTTOM_TITLE != null">BUTTOM_TITLE=#{BUTTOM_TITLE},</if>
+			<if test="AUTHOR != null">AUTHOR=#{AUTHOR},</if>
+			<if test="KEYWORDS != null">KEYWORDS=#{KEYWORDS},</if>
+			<if test="ABSTRACTS != null">ABSTRACTS=#{ABSTRACTS},</if>
+			<if test="PUB_TIME != null">PUB_TIME=#{PUB_TIME},</if>
+			<if test="SOURCE_URL != null">SOURCE_URL=#{SOURCE_URL},</if>
+			<if test="U_USER != null">U_USER=#{U_USER},U_TIME=now(),VERSION_NO=VERSION_NO+1,</if>
+			<if test="PUB_URL != null">PUB_URL=#{PUB_URL},</if>
+			<if test="PUB_FILE_NAME != null">PUB_FILE_NAME=#{PUB_FILE_NAME},</if>
+			<if test="PUB_TIME != null">PUB_TIME=#{PUB_TIME},</if>
+			<if test="LINK_URL != null">LINK_URL=#{LINK_URL},</if>
+			<if test="SERVER_PATH != null">SERVER_PATH=#{SERVER_PATH},</if>
+			<if test="SITE_PK != null">SITE_PK=#{SITE_PK},</if>
+			<if test="CHANNEL_PK != null">CHANNEL_PK=#{CHANNEL_PK},</if>
+			<if test="IS_DEPLOY != null">IS_DEPLOY=#{IS_DEPLOY},</if>
+			<if test="VOICE_URL != null">VOICE_URL=#{VOICE_URL}</if>
+		</trim>
+		WHERE DOC_PK = #{DOC_PK}
+	</update>
+
+	<update id="updateBusiDocumentDefDeploySts" parameterType="hashmap">
+		update busi_document_def
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="IS_DEPLOY != null">IS_DEPLOY=#{IS_DEPLOY},</if>
+			<if test="STS != null">STS=#{STS},</if>
+		</trim>
+		WHERE DOC_PK in( ${DOC_PK_ARR} )
+	</update>
+
+	<update id="updateBusiDocumentDefBatMove" parameterType="hashmap">
+		update busi_document_def
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="TO_SITE_PK != null">SITE_PK=#{TO_SITE_PK},</if>
+			<if test="TO_CHANNEL_PK != null">CHANNEL_PK=#{TO_CHANNEL_PK},</if>
+		</trim>
+		WHERE DOC_PK in( ${DOC_PK_ARR} )
+	</update>
+	<insert id="updateBusiDocumentDefBatCopy" parameterType="hashmap">
+		insert into busi_document_def(
+			DOC_PK,CHANNEL_PK,TITLE,FIRST_PAGE_TITLE,SOURCE,
+				WRITE_TIME,CONTENT,CONTENT_HTML,TOP_TITLE,BUTTOM_TITLE,
+				AUTHOR,KEYWORDS,ABSTRACTS,SOURCE_URL,C_USER,
+				C_TIME,VERSION_NO,STS,PUB_URL,PUB_FILE_NAME,
+				PUB_TIME,TMPLATE_ID,U_USER,U_TIME,DOC_TYPE,
+				LINK_URL,SITE_PK,TITLE_HTML,FP_TITLE_HTML
+		)select CONCAT(DOC_PK,'1') AS DOC_PK,CHANNEL_PK,TITLE,FIRST_PAGE_TITLE,SOURCE,
+				WRITE_TIME,CONTENT,CONTENT_HTML,TOP_TITLE,BUTTOM_TITLE,
+				AUTHOR,KEYWORDS,ABSTRACTS,SOURCE_URL,C_USER,
+				C_TIME,VERSION_NO,STS,PUB_URL,PUB_FILE_NAME,
+				PUB_TIME,TMPLATE_ID,U_USER,U_TIME,DOC_TYPE,
+				LINK_URL,SITE_PK,TITLE_HTML,FP_TITLE_HTML
+		from busi_document_def
+		WHERE DOC_PK in( ${DOC_PK_ARR} )
+	</insert>
+
+
+	<update id="updateBusiDocumentSts" parameterType="hashmap">
+		update busi_document_def
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="STS != null">STS=#{STS},</if>
+			<if test="AUDIT_INFO != null">AUDIT_INFO=#{AUDIT_INFO},</if>
+			<if test="SIGN_INFO != null">SIGN_INFO=#{SIGN_INFO},</if>
+		</trim>
+		WHERE DOC_PK = #{DOC_PK}
+	</update>
+
+	<update id="updateBusiDocumentStsBat" parameterType="hashmap">
+		update busi_document_def
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="STS != null">STS=#{STS},</if>
+			<if test="PUB_URL_BLANK != null">PUB_URL=#{PUB_URL,jdbcType=VARCHAR},</if>
+		</trim>
+		WHERE DOC_PK in( ${DOC_PK_ARR} )
+	</update>
+
+    <update id="updateBusiDocumentStsByChannelPk" parameterType="hashmap">
+        update busi_document_def
+        <trim prefix="SET" suffixOverrides=",">
+            <if test="STS != null">STS=#{STS},</if>
+			<if test="PUB_URL_BLANK != null">PUB_URL=#{PUB_URL,jdbcType=VARCHAR},</if>
+        </trim>
+        WHERE CHANNEL_PK = #{CHANNEL_PK}
+    </update>
+
+	<select id="queryBusiDocumentDef" resultType="hashmap" parameterType="hashmap">
+		select 	a.DOC_PK,a.CHANNEL_PK,a.TITLE,FIRST_PAGE_TITLE,a.SOURCE,
+				WRITE_TIME,CONTENT,CONTENT_HTML,TOP_TITLE,BUTTOM_TITLE,
+				AUTHOR,KEYWORDS,ABSTRACTS,SOURCE_URL,a.C_USER,
+				a.C_TIME,a.VERSION_NO,a.STS,PUB_URL,PUB_FILE_NAME,
+				a.PUB_TIME,a.TMPLATE_ID,a.U_USER,a.U_TIME,a.DOC_TYPE,
+				a.LINK_URL,a.SITE_PK,TITLE_HTML,FP_TITLE_HTML,
+				B.IS_PUBLISH,B.IS_AUDIT,B.IS_SIGN,c.LOGIN_NAME,c.REAL_NAME,
+				DATE_FORMAT(a.C_TIME, '%Y-%m-%d %H:%i:%s') AS C_TIME_STR,
+				DATE_FORMAT(a.U_TIME, '%Y-%m-%d %H:%i:%s') AS U_TIME_STR,
+				a.VOICE_URL
+		from busi_document_def a,busi_channel_def b,sys_user_def c
+		where a.channel_pk = b.channel_pk AND a.c_user = c.user_id
+		<if test="DOC_PK != null">
+			AND a.DOC_PK = #{DOC_PK}
+		</if>
+		<if test="CHANNEL_PK != null">
+			AND a.CHANNEL_PK = #{CHANNEL_PK}
+		</if>
+		<if test="SITE_PK != null">
+			AND a.SITE_PK = #{SITE_PK}
+		</if>
+		<if test="DATA_SCALE_USER_ID != null">
+			AND a.CHANNEL_PK IN(SELECT CHANNEL_PK FROM sys_op_data_scale WHERE USER_ID=#{DATA_SCALE_USER_ID})
+		</if>
+		<if test="CLASS_ID != null">
+			AND a.SITE_PK in(   select site_pk from busi_site_def where SITE_CLASS=#{CLASS_ID} )
+		</if>
+		<if test="DOC_TYPE != null">
+			AND a.DOC_TYPE = #{DOC_TYPE}
+		</if>
+		<if test="C_USER != null">
+			AND a.C_USER = #{C_USER}
+		</if>
+		<if test="STS != null">
+			AND a.STS = #{STS}
+		</if>
+		<if test="QRY_STS_ARR != null">
+			AND a.STS in(${QRY_STS_ARR})
+		</if>
+		<if test="QUERY_NAME != null">
+			AND (TITLE like '%${QUERY_NAME}%' or FIRST_PAGE_TITLE like '%${QUERY_NAME}%'
+			or TOP_TITLE like '%${QUERY_NAME}%' or BUTTOM_TITLE like '%${QUERY_NAME}%'
+			or KEYWORDS like '%${QUERY_NAME}%' or ABSTRACTS like '%${QUERY_NAME}%'
+			)
+		</if>
+		order by a.U_TIME desc
+		<if test="DATA_LIMIT != null">
+			LIMIT ${START_POS},${PAGE_SIZE}
+		</if>
+	</select>
+	<select id="queryBusiDocumentDefTotal" resultType="hashmap" parameterType="hashmap">
+		select 	count(*) as TOTAL
+		from busi_document_def a,busi_channel_def b,sys_user_def c
+		where a.channel_pk = b.channel_pk AND a.c_user = c.user_id
+		<if test="DOC_PK != null">
+			AND a.DOC_PK = #{DOC_PK}
+		</if>
+		<if test="CHANNEL_PK != null">
+			AND a.CHANNEL_PK = #{CHANNEL_PK}
+		</if>
+		<if test="SITE_PK != null">
+			AND a.SITE_PK = #{SITE_PK}
+		</if>
+		<if test="CLASS_ID != null">
+			AND a.SITE_PK in(   select site_pk from busi_site_def where SITE_CLASS=#{CLASS_ID} )
+		</if>
+		<if test="DOC_TYPE != null">
+			AND a.DOC_TYPE = #{DOC_TYPE}
+		</if>
+		<if test="C_USER != null">
+			AND a.C_USER = #{C_USER}
+		</if>
+		<if test="STS != null">
+			AND a.STS = #{STS}
+		</if>
+		<if test="QRY_STS_ARR != null">
+			AND a.STS in(${QRY_STS_ARR})
+		</if>
+		<if test="QUERY_NAME != null">
+			AND (TITLE like '%${QUERY_NAME}%' or FIRST_PAGE_TITLE like '%${QUERY_NAME}%'
+			or TOP_TITLE like '%${QUERY_NAME}%' or BUTTOM_TITLE like '%${QUERY_NAME}%'
+			or KEYWORDS like '%${QUERY_NAME}%' or ABSTRACTS like '%${QUERY_NAME}%'
+			)
+		</if>
+	</select>
+
+	<insert id="saveBusiDocumentHis" parameterType="hashmap">
+		INSERT INTO busi_document_his(DOC_PK,CONTENT,CONTENT_HTML,U_USER,U_TIME,VERSION_NO,TITLE,TITLE_HTML)
+		select DOC_PK,CONTENT,CONTENT_HTML,U_USER,U_TIME,VERSION_NO+1,TITLE,TITLE_HTML from busi_document_def where DOC_PK = #{DOC_PK}
+    </insert>
+
+
+
+	<select id="queryTemplateInfoByDocPk" resultType="hashmap" parameterType="hashmap">
+		SELECT b.TMPL_CONTENT,a.DOC_PK,a.CHANNEL_PK,a.TITLE,a.FIRST_PAGE_TITLE,a.SOURCE,
+				a.WRITE_TIME,a.CONTENT,a.CONTENT_HTML,a.TOP_TITLE,a.BUTTOM_TITLE,
+				a.AUTHOR,a.KEYWORDS,a.ABSTRACTS,a.SOURCE_URL,a.C_USER,
+				a.C_TIME,a.VERSION_NO,a.STS,a.PUB_URL,a.PUB_FILE_NAME,
+				a.PUB_TIME,a.TMPLATE_ID,a.U_USER,a.U_TIME,a.DOC_TYPE,
+				a.LINK_URL,d.SITE_PK,d.SITE_CODE,d.DOMAIN_URL,c.CHANNEL_DIR,c.CHANNEL_CODE,c.IS_SIGN,
+				a.SERVER_PATH,a.VOICE_URL
+		FROM busi_document_def a,busi_template_def b,busi_channel_def c,busi_site_def d
+		WHERE c.doc_tmpl = b.tmpl_pk
+		and a.channel_pk = c.channel_pk
+		and c.site_pk = d.site_pk
+		AND a.doc_pk=#{DOC_PK}
+	</select>
+
+
+	<select id="queryDocumentByChannelPkArr" resultType="hashmap" parameterType="hashmap">
+		select  DOC_PK,CHANNEL_PK,TITLE,FIRST_PAGE_TITLE,SOURCE,
+			WRITE_TIME,CONTENT,CONTENT_HTML,TOP_TITLE,BUTTOM_TITLE,
+			AUTHOR,KEYWORDS,ABSTRACTS,SOURCE_URL,C_USER,
+			C_TIME,VERSION_NO,STS,PUB_URL,PUB_FILE_NAME,
+			PUB_TIME,TMPLATE_ID,DOC_TYPE,LINK_URL,
+			U_USER,U_TIME,SITE_PK,TITLE_HTML,FP_TITLE_HTML,
+			IS_DEPLOY,VOICE_URL
+		from busi_document_def
+		WHERE CHANNEL_PK in( ${CHANNEL_PK_ARR} )
+	</select>
+
+	<!--取待转语音的文档-->
+	<select id="queryDocumentToSwitchVoice" resultType="hashmap" parameterType="hashmap">
+		select  DOC_PK,CHANNEL_PK,TITLE,FIRST_PAGE_TITLE,SOURCE,
+			WRITE_TIME,CONTENT,CONTENT_HTML,TOP_TITLE,BUTTOM_TITLE,
+			AUTHOR,KEYWORDS,ABSTRACTS,SOURCE_URL,C_USER,
+			C_TIME,VERSION_NO,STS,PUB_URL,PUB_FILE_NAME,
+			PUB_TIME,TMPLATE_ID,DOC_TYPE,LINK_URL,
+			U_USER,U_TIME,SITE_PK,TITLE_HTML,FP_TITLE_HTML,
+			IS_DEPLOY,VOICE_URL,SERVER_PATH
+		from busi_document_def
+		WHERE sts=99 AND voice_url IS null AND CONTENT IS NOT NULL and SERVER_PATH is not null
+		LIMIT 0,${BAT_PROC_SWITCH_VOICE}
+	</select>
+</mapper>
+

@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="busiMapper_kingBase">
+	<select id="queryBusiTemplateDef" resultType="hashmap" parameterType="hashmap">
+		select 	distinct a.TMPL_PK,TMPL_NAME,EXT_NAME,TMPL_DESC,
+				TMPL_TYPE,TMPL_LABEL,PUB_FILE_NAME,TMPL_FACE_PIC,TMPL_CONTENT,
+				IS_GLOBAL,OP_USER,OP_TIME,VERSION_NO,a.TMPL_CODE,SITE_PK,
+				to_char(OP_TIME,'yyyy-MM-dd hh24:mi:ss') AS OP_TIME_STR,
+				b.tmpl_pk AS TMPL_FILE_PK
+		from busi_template_def a  LEFT JOIN busi_template_file b ON a.tmpl_pk = b.tmpl_pk
+ 		where 1=1
+		<if test="TMPL_PK != null">
+			AND a.TMPL_PK = #{TMPL_PK}
+		</if>
+		<if test="SITE_PK != null">
+			AND (a.SITE_PK = #{SITE_PK} OR IS_GLOBAL=1)
+		</if>
+		<if test="QUERY_NAME != null">
+			AND (a.TMPL_NAME like '%${QUERY_NAME}%' or TMPL_DESC like '%${QUERY_NAME}%' or TMPL_LABEL like '%${QUERY_NAME}%')
+		</if>
+		order by OP_TIME desc
+	</select>
+
+	<select id="queryBusiTemplateHisByTmplPK" resultType="hashmap" parameterType="hashmap">
+		SELECT TMPL_PK,TMPL_CONTENT,OP_TIME,
+			to_char(OP_TIME,'yyyy-MM-dd hh24:mi:ss') AS OP_TIME_STR,
+			VERSION_NO,LOGIN_NAME,REAL_NAME
+		FROM busi_template_his a LEFT JOIN sys_user_def b
+		ON a.op_user = b.user_id
+		WHERE tmpl_pk=#{TMPL_PK}
+		ORDER BY op_time DESC
+		LIMIT 0,5
+	</select>
+</mapper>
+

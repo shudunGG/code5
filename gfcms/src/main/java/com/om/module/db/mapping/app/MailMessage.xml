@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="busiMapper">
+	<!--对留言的增、删、改、查-->
+	<insert id="saveBusiAppMailMsg" parameterType="hashmap">
+		INSERT INTO busi_app_mail_msg(
+			MSG_PK,SITE_PK,BOX_NAME,M_TITLE,M_CONTENT,
+			LINK_MAN,LINK_PHONE,STS,IS_OPEN,LINK_MAIL,
+			CREATE_TIME
+		)VALUES(
+			#{MSG_PK},#{SITE_PK},#{BOX_NAME},#{M_TITLE},#{M_CONTENT},
+			#{LINK_MAN},#{LINK_PHONE},0,#{IS_OPEN},#{LINK_MAIL,jdbcType=VARCHAR}
+			now()
+		)
+    </insert>
+
+	<delete id="deleteBusiAppMailMsg" parameterType="hashmap">
+		delete from busi_app_mail_msg where MSG_PK = #{MSG_PK}
+    </delete>
+
+	<update id="updateBusiAppMailMsg" parameterType="hashmap">
+		update busi_app_mail_msg
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="M_TITLE != null">M_TITLE=#{M_TITLE},</if>
+			<if test="M_CONTENT != null">M_CONTENT=#{M_CONTENT},</if>
+			<if test="STS != null">STS=#{STS},</if>
+			<if test="IS_OPEN != null">IS_OPEN=#{IS_OPEN},</if>
+			<if test="LINK_MAIL != null">LINK_MAIL=#{LINK_MAIL},</if>
+			<if test="AUDIT_USER != null">AUDIT_USER=#{AUDIT_USER},AUDIT_USER_NAME=#{AUDIT_USER_NAME},AUDIT_TIME=now(),</if>
+			<if test="AUDIT_OPINION != null">AUDIT_OPINION=#{AUDIT_OPINION},</if>
+			<if test="REPLY_USER != null">REPLY_USER=#{REPLY_USER},REPLY_USER_NAME=#{REPLY_USER_NAME},REPLY_TIME=now(),</if>
+			<if test="REPLY_CONTENT != null">REPLY_CONTENT=#{REPLY_CONTENT},</if>
+		</trim>
+		WHERE MSG_PK = #{MSG_PK}
+	</update>
+
+	<select id="queryBusiAppMailMsgTotal" resultType="hashmap" parameterType="hashmap">
+		select  count(*) as TOTAL
+		from busi_app_mail_msg a
+		where 1=1
+		<if test="MSG_PK != null">
+			AND MSG_PK = #{MSG_PK}
+		</if>
+		<if test="SITE_PK != null">
+			AND SITE_PK = #{SITE_PK}
+		</if>
+		<if test="BOX_NAME != null">
+			AND BOX_NAME = #{BOX_NAME}
+		</if>
+		<if test="STS != null">
+			AND STS = #{STS}
+		</if>
+		<if test="QUERY_NAME != null">
+			AND (M_TITLE like '%${QUERY_NAME}%' or M_CONTENT like '%${QUERY_NAME}%'
+			)
+		</if>
+		<if test="LINK_MAN != null">
+			AND LINK_MAN like '%${LINK_MAN}%'
+		</if>
+		<if test="LINK_PHONE != null">
+			AND LINK_PHONE like '%${LINK_PHONE}%'
+		</if>
+		<if test="IS_OPEN != null">
+			AND IS_OPEN = #{IS_OPEN}
+		</if>
+		<if test="AUDIT_USER_NAME != null">
+			AND AUDIT_USER_NAME like '%${AUDIT_USER_NAME}%'
+		</if>
+		<if test="REPLY_USER_NAME != null">
+			AND REPLY_USER_NAME like '%${REPLY_USER_NAME}%'
+		</if>
+		order by CREATE_TIME desc
+	</select>
+
+	<select id="queryBusiAppMailMsg" resultType="hashmap" parameterType="hashmap">
+		select  MSG_PK,SITE_PK,BOX_NAME,M_TITLE,M_CONTENT,
+		LINK_MAN,LINK_PHONE,STS,IS_OPEN,REPLY_CONTENT,
+		AUDIT_USER,AUDIT_TIME,AUDIT_OPINION,REPLY_USER,REPLY_TIME,
+		AUDIT_USER_NAME,REPLY_USER_NAME,CREATE_TIME,LINK_MAIL,
+		DATE_FORMAT(CREATE_TIME, '%Y-%m-%d %H:%i:%s') AS CREATE_TIME_STR,
+		DATE_FORMAT(AUDIT_TIME, '%Y-%m-%d %H:%i:%s') AS AUDIT_TIME_STR,
+		DATE_FORMAT(REPLY_TIME, '%Y-%m-%d %H:%i:%s') AS REPLY_TIME_STR
+		from busi_app_mail_msg a
+		where 1=1
+		<if test="MSG_PK != null">
+			AND MSG_PK = #{MSG_PK}
+		</if>
+		<if test="SITE_CODE != null">
+			AND SITE_PK IN(SELECT SITE_PK FROM busi_site_def WHERE site_code=#{SITE_CODE})
+		</if>
+		<if test="BOX_NAME != null">
+			AND BOX_NAME = #{BOX_NAME}
+		</if>
+		<if test="STS != null">
+			AND STS = #{STS}
+		</if>
+		<if test="QUERY_NAME != null">
+			AND (M_TITLE like '%${QUERY_NAME}%' or M_CONTENT like '%${QUERY_NAME}%'
+			)
+		</if>
+		<if test="LINK_MAN != null">
+			AND LINK_MAN like '%${LINK_MAN}%'
+		</if>
+		<if test="LINK_PHONE != null">
+			AND LINK_PHONE like '%${LINK_PHONE}%'
+		</if>
+		<if test="IS_OPEN != null">
+			AND IS_OPEN = #{IS_OPEN}
+		</if>
+		<if test="AUDIT_USER_NAME != null">
+			AND AUDIT_USER_NAME like '%${AUDIT_USER_NAME}%'
+		</if>
+		<if test="REPLY_USER_NAME != null">
+			AND REPLY_USER_NAME like '%${REPLY_USER_NAME}%'
+		</if>
+		order by CREATE_TIME desc
+		<if test="DATA_LIMIT != null">
+			LIMIT ${START_POS},${PAGE_SIZE}
+		</if>
+	</select>
+
+</mapper>
+

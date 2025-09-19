@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/order/!svn/ver/3145/power/fd/src/com/gs/jari/bo/message/req
+END
+BaseMessage.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/order/!svn/ver/3145/power/fd/src/com/gs/jari/bo/message/req/BaseMessage.java
+END
+LinkMessage.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/order/!svn/ver/3145/power/fd/src/com/gs/jari/bo/message/req/LinkMessage.java
+END
+ImageMessage.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/order/!svn/ver/3145/power/fd/src/com/gs/jari/bo/message/req/ImageMessage.java
+END
+TextMessage.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/order/!svn/ver/3145/power/fd/src/com/gs/jari/bo/message/req/TextMessage.java
+END
+VoiceMessage.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/order/!svn/ver/3145/power/fd/src/com/gs/jari/bo/message/req/VoiceMessage.java
+END
+LocationMessage.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/order/!svn/ver/3145/power/fd/src/com/gs/jari/bo/message/req/LocationMessage.java
+END

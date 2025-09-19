@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.integrated.platform.mapper.OaEmailMapper">
+
+    <resultMap id="BaseResultMap" type="com.vingsoft.entity.OaEmail">
+        <id column="id" property="id" />
+        <result column="create_time" property="createTime" />
+        <result column="create_user" property="createUser" />
+        <result column="create_dept" property="createDept" />
+        <result column="update_time" property="updateTime" />
+        <result column="update_user" property="updateUser" />
+        <result column="status" property="status" />
+        <result column="is_deleted" property="isDeleted" />
+
+        <result column="title" property="title" />
+        <result column="receiver_user" property="receiverUser" />
+        <result column="receiver_user_name" property="receiverUserName" />
+        <result column="is_copied" property="isCopied" />
+        <result column="copied_user" property="copiedUser" />
+        <result column="copied_user_name" property="copiedUserName" />
+        <result column="content" property="content" />
+        <result column="files" property="files" />
+    </resultMap>
+
+
+    <select id="findInboxPage" resultType="com.vingsoft.entity.OaEmail">
+        select e.*,r.read_status,r.id as read_id from oa_email e
+        left join oa_email_read r on r.email_id = e.id
+        where r.is_deleted = 0 and r.receiver_user = ${userId}
+        <if test="title != null and title != ''">
+            AND e.title like concat('%', #{title}, '%')
+        </if>
+        <if test="readStatus != null">
+            AND r.read_status = ${readStatus}
+        </if>
+        order by e.create_time desc
+    </select>
+</mapper>

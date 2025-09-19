@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="busiMapper_kingBase">
+	<select id="queryBusiDocumentDef" resultType="hashmap" parameterType="hashmap">
+		select 	a.DOC_PK,a.CHANNEL_PK,a.TITLE,FIRST_PAGE_TITLE,a.SOURCE,
+				WRITE_TIME,CONTENT,CONTENT_HTML,TOP_TITLE,BUTTOM_TITLE,
+				AUTHOR,KEYWORDS,ABSTRACTS,SOURCE_URL,a.C_USER,
+				a.C_TIME,a.VERSION_NO,a.STS,PUB_URL,PUB_FILE_NAME,
+				a.PUB_TIME,a.TMPLATE_ID,a.U_USER,a.U_TIME,a.DOC_TYPE,
+				a.LINK_URL,a.SITE_PK,TITLE_HTML,FP_TITLE_HTML,
+				B.IS_PUBLISH,B.IS_AUDIT,B.IS_SIGN,c.LOGIN_NAME,c.REAL_NAME,
+				to_char(a.C_TIME,'yyyy-MM-dd hh24:mi:ss') AS C_TIME_STR,
+				to_char(a.U_TIME,'yyyy-MM-dd hh24:mi:ss') AS U_TIME_STR,
+				a.VOICE_URL
+		from busi_document_def a,busi_channel_def b,sys_user_def c
+		where a.channel_pk = b.channel_pk AND a.c_user = c.user_id
+		<if test="DOC_PK != null">
+			AND a.DOC_PK = #{DOC_PK}
+		</if>
+		<if test="CHANNEL_PK != null">
+			AND a.CHANNEL_PK = #{CHANNEL_PK}
+		</if>
+		<if test="SITE_PK != null">
+			AND a.SITE_PK = #{SITE_PK}
+		</if>
+		<if test="DATA_SCALE_USER_ID != null">
+			AND a.CHANNEL_PK IN(SELECT CHANNEL_PK FROM sys_op_data_scale WHERE USER_ID=#{DATA_SCALE_USER_ID})
+		</if>
+		<if test="CLASS_ID != null">
+			AND a.SITE_PK in(   select site_pk from busi_site_def where SITE_CLASS=#{CLASS_ID} )
+		</if>
+		<if test="DOC_TYPE != null">
+			AND a.DOC_TYPE = #{DOC_TYPE}
+		</if>
+		<if test="C_USER != null">
+			AND a.C_USER = #{C_USER}
+		</if>
+		<if test="STS != null">
+			AND a.STS = #{STS}
+		</if>
+		<if test="QRY_STS_ARR != null">
+			AND a.STS in(${QRY_STS_ARR})
+		</if>
+		<if test="QUERY_NAME != null">
+			AND (TITLE like '%${QUERY_NAME}%' or FIRST_PAGE_TITLE like '%${QUERY_NAME}%'
+			or TOP_TITLE like '%${QUERY_NAME}%' or BUTTOM_TITLE like '%${QUERY_NAME}%'
+			or KEYWORDS like '%${QUERY_NAME}%' or ABSTRACTS like '%${QUERY_NAME}%'
+			)
+		</if>
+		order by a.U_TIME desc
+		<if test="DATA_LIMIT != null">
+			LIMIT ${START_POS},${PAGE_SIZE}
+		</if>
+	</select>
+
+</mapper>
+

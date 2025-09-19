@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.integrated.platform.mapper.NoticeInfoMapper">
+  <resultMap id="BaseResultMap" type="com.vingsoft.entity.NoticeInfo">
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="title" jdbcType="VARCHAR" property="title" />
+    <result column="cover_Photo" jdbcType="VARCHAR" property="coverPhoto" />
+    <result column="content" jdbcType="VARCHAR" property="content" />
+    <result column="release_Status" jdbcType="VARCHAR" property="releaseStatus" />
+    <result column="release_Time" jdbcType="TIMESTAMP" property="releaseTime" />
+    <result column="release_User" jdbcType="VARCHAR" property="releaseUser" />
+    <result column="release_User_Name" jdbcType="VARCHAR" property="releaseUserName" />
+    <result column="release_Dept" jdbcType="VARCHAR" property="releaseDept" />
+    <result column="release_Dept_Name" jdbcType="VARCHAR" property="releaseDeptnName" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="create_user" jdbcType="VARCHAR" property="createUser" />
+    <result column="create_dept" jdbcType="VARCHAR" property="createDept" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="update_user" jdbcType="VARCHAR" property="updateUser" />
+    <result column="update_dept" jdbcType="VARCHAR" property="updateDept" />
+  </resultMap>
+
+
+</mapper>

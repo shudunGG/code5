@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.integrated.platform.mapper.QuarterlyEvaluationMapper">
+
+    <!--<select id="tree" resultMap="treeNodeResultMap">
+        select id, parent_id, dict_value as title, id as "value", id as "key" from blade_dict_biz where is_deleted = 0
+    </select>-->
+
+    <!--党建工作-->
+    <select id="exportQuarterlyEvaluation1"  resultType="org.springblade.integrated.platform.excel.QuarterlyEvaluationExcel1">
+        <!-- 如有需要可以加上条件 where id= #{queryWrapper.id} -->
+        SELECT check_classify_name,major_target,check_object,appraise_deptname,weight,finish_date,
+        (case target_status when '0' then '暂存' when '1' then '推进中'  when '2' then '已完成'  end) target_status
+        FROM quarterly_evaluation where 1=1
+        <if test="jdzbName != null and jdzbName != ''">
+            and jdzb_name=#{jdzbName}
+        </if>
+
+        <if test="checkClassify != null and checkClassify != ''">
+            and jdzb_name=#{checkClassify}
+        </if>
+
+        <if test="checkObjectId != null and checkObjectId != ''">
+            and jdzb_name=#{checkObjectId}
+        </if>
+
+        <if test="appraiseDeptid != null and appraiseDeptid != ''">
+            and jdzb_name=#{appraiseDeptid}
+        </if>
+
+        <if test="targetStatus != null and targetStatus != ''">
+            and jdzb_name=#{targetStatus}
+        </if>
+
+        <if test="createTime != null and createTime != ''">
+            and create_ime like CONCAT('%',#{createTime},'%')
+        </if>
+
+
+    </select>
+
+    <!--工作实绩-->
+    <select id="exportQuarterlyEvaluation2"  resultType="org.springblade.integrated.platform.excel.QuarterlyEvaluationExcel2">
+        <!-- 如有需要可以加上条件 where id= #{queryWrapper.id} -->
+        SELECT check_classify_name,first_target,two_target,check_object,appraise_deptname,weight,finish_date,
+        (case target_status when '0' then '暂存' when '1' then '推进中'  when '2' then '已完成'  end) target_status
+        FROM quarterly_evaluation where 1=1
+        <if test="jdzbName != null and jdzbName != ''">
+            and jdzb_name=#{jdzbName}
+        </if>
+    </select>
+
+    <!--党风廉政-->
+    <select id="exportQuarterlyEvaluation3"  resultType="org.springblade.integrated.platform.excel.QuarterlyEvaluationExcel3">
+        <!-- 如有需要可以加上条件 where id= #{queryWrapper.id} -->
+        SELECT import_work,check_classify_name,major_target,scoring_rubric,check_object,appraise_deptname,weight,finish_date,
+        (case target_status when '0' then '暂存' when '1' then '推进中'  when '2' then '已完成'  end) target_status
+        FROM quarterly_evaluation where 1=1
+        <if test="jdzbName != null and jdzbName != ''">
+            and jdzb_name=#{jdzbName}
+        </if>
+    </select>
+
+</mapper>

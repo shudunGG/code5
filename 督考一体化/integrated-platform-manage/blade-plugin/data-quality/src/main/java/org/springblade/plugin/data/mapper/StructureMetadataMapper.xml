@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.plugin.data.mapper.StructureMetadataMapper">
+	<!-- StructureMetadata的resultMap,column是给数据库列起的别名,它对应property类的属性 -->
+	<resultMap id="result_StructureMetadata_Map" type="org.springblade.plugin.data.entity.StructureMetadata">
+		<id column="id" property="id" />
+		<result column="name" property="name" />
+		<result column="type" property="type" />
+		<result column="data_size" property="dataSize" />
+		<result column="digits" property="digits" />
+		<result column="nullable" property="nullable" />
+		<result column="default_value" property="defaultValue" />
+		<result column="if_unique" property="ifUnique" />
+		<result column="remark" property="remark" />
+		<result column="ch_name" property="chName" />
+		<result column="theme_id" property="themeId" />
+	</resultMap>
+</mapper>

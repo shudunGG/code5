@@ -1,0 +1,225 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="busiMapper">
+
+	<!--对收藏夹的增、删、改、查-->
+	<insert id="saveGfZyFavorite" parameterType="hashmap">
+		INSERT INTO gf_zy_favorite(
+			FAV_ID,FAV_PERSON,FAV_TIME,TITLE,URL,
+			EXT1,EXT2,EXT3,EXT4,EXT5,
+			FAV_TYPE
+		)VALUES(
+			#{FAV_ID},#{FAV_PERSON},now(),#{TITLE},#{URL},
+			#{EXT1,jdbcType=VARCHAR},#{EXT2,jdbcType=VARCHAR},#{EXT3,jdbcType=VARCHAR},#{EXT4,jdbcType=VARCHAR},#{EXT5,jdbcType=VARCHAR},
+			#{FAV_TYPE}
+		)
+    </insert>
+
+
+	<delete id="deleteGfZyFavorite" parameterType="hashmap">
+		delete from gf_zy_favorite where FAV_ID = #{FAV_ID}
+    </delete>
+
+
+    <select id="queryMyAllFavoriteList" resultType="hashmap" parameterType="hashmap">
+        select  FAV_ID,URL,FAV_TYPE
+        from gf_zy_favorite
+        where FAV_PERSON = #{FAV_PERSON}
+    </select>
+
+	<select id="queryGfZyFavoriteList" resultType="hashmap" parameterType="hashmap">
+		select  FAV_ID,FAV_PERSON,FAV_TIME,TITLE,URL,
+				EXT1,EXT2,EXT3,EXT4,EXT5,
+				FAV_TYPE,
+				DATE_FORMAT(FAV_TIME, '%Y-%m-%d %H:%i:%s') AS FAV_TIME_STR
+		from gf_zy_favorite
+		where FAV_TYPE = #{FAV_TYPE}
+		<if test="FAV_ID != null">
+			AND FAV_ID = #{FAV_ID}
+		</if>
+		<if test="FAV_PERSON != null">
+			AND FAV_PERSON = #{FAV_PERSON}
+		</if>
+        <if test="URL != null">
+            AND URL = #{URL}
+        </if>
+		order by FAV_TIME desc
+		<if test="DATA_LIMIT != null">
+			LIMIT ${START_POS},${PAGE_SIZE}
+		</if>
+	</select>
+
+	<select id="queryGfZyFavoriteTotal" resultType="hashmap" parameterType="hashmap">
+		select  count(*) as TOTAL
+		from gf_zy_favorite
+		where FAV_TYPE = #{FAV_TYPE}
+		<if test="FAV_ID != null">
+			AND FAV_ID = #{FAV_ID}
+		</if>
+		<if test="FAV_PERSON != null">
+			AND FAV_PERSON = #{FAV_PERSON}
+		</if>
+        <if test="URL != null">
+            AND URL = #{URL}
+        </if>
+	</select>
+
+
+    <select id="queryIgiMyMessageList" resultType="hashmap" parameterType="hashmap">
+        select ID,CREATE_DATE,CARDID,CARDTYPE,
+            FINISHTIME,PHONE,STATUS,SITEID,
+            TITLE,LAST_REPLY_TIME, QUERY_NUMBER,QUERY_PWD,
+            DATE_FORMAT(CREATE_DATE, '%Y-%m-%d %H:%i:%s') AS CREATE_DATE_STR,
+            DATE_FORMAT(FINISHTIME, '%Y-%m-%d %H:%i:%s') AS FINISHTIME_STR,
+            DATE_FORMAT(LAST_REPLY_TIME, '%Y-%m-%d %H:%i:%s') AS LAST_REPLY_TIME_STR
+        from trs_govmsgbox
+        where 1=1
+        <if test="PHONE != null">
+            AND PHONE = #{PHONE}
+        </if>
+        <if test="CARDID != null">
+            AND CARDID = #{CARDID}
+        </if>
+        <if test="STATUS != null">
+            AND status in(1,3,4,5,7,10,11,12)
+        </if>
+        order by LAST_REPLY_TIME desc
+        <if test="DATA_LIMIT != null">
+            LIMIT ${START_POS},${PAGE_SIZE}
+        </if>
+    </select>
+
+    <select id="queryIgiMyMessageTotal" resultType="hashmap" parameterType="hashmap">
+        select COUNT(*) AS TOTAL
+        from trs_govmsgbox
+        where 1=1
+        <if test="PHONE != null">
+            AND PHONE = #{PHONE}
+        </if>
+        <if test="STATUS != null">
+            AND status in(1,3,4,5,7,10,11,12)
+        </if>
+        <if test="CARDID != null">
+            AND CARDID = #{CARDID}
+        </if>
+    </select>
+
+
+    <select id="queryMessageDetailById" resultType="hashmap" parameterType="hashmap">
+        select ID,CREATE_DATE,CARDID,CARDTYPE,
+        FINISHTIME,PHONE,STATUS,
+        TITLE, QUERY_NUMBER,
+        DATE_FORMAT(CREATE_DATE, '%Y-%m-%d %H:%i:%s') AS CREATE_DATE_STR,
+        DATE_FORMAT(FINISHTIME, '%Y-%m-%d %H:%i:%s') AS FINISHTIME_STR,
+        b.REPLYCONTENT,b.REPLYDEPT,b.REPLYTIME,b.REPLYHTMLCONTENT,
+        DATE_FORMAT(b.REPLYTIME, '%Y-%m-%d %H:%i:%s') AS REPLYTIME_STR
+        from trs_govmsgbox a LEFT JOIN trs_govmsgbox_reply b on a.id = b.data_id
+        where a.id=#{ID}
+        order by b.REPLYTIME desc
+
+    </select>
+
+
+    <select id="loadAllSiteAndChannelInfoToCache" resultType="hashmap" parameterType="hashmap">
+        select b.SITEID,b.SITENAME,b.SITEDESC,a.CHANNELID,a.CHNLDESC,a.PARENTID
+        from trs_hycloud_iip.wcmchannel a,trs_hycloud_iip.wcmwebsite b
+        where a.siteid = b.siteid
+        and a.siteid in(${SITE_LIST})
+        and a.status &gt;= 0
+    </select>
+
+
+    <select id="queryChannelUpdateInfoList" resultType="hashmap" parameterType="hashmap">
+        select b.CHNLID,max(docreltime) as DOCTIME,DATE_FORMAT(max(docreltime), '%Y-%m-%d %H:%i:%s') AS DOCTIME_STR,
+            DATEDIFF(CURDATE(),max(docreltime)) as DIFDAY,c.UPDATE_DAYS
+        from trs_hycloud_iip.wcmchannel a,trs_hycloud_iip.wcmchnldoc b,trs_hycloud_iip.gf_channel_limit c
+        where a.CHANNELID = b.CHNLID
+        and  a.CHANNELID = c.channel_id
+        AND C.UPDATE_DAYS > 0
+        and a.siteid in(${SITE_LIST})
+        <if test="SITE_ID != null">
+            AND a.siteid = #{SITE_ID}
+        </if>
+        <if test="QUERY_START_TIME != null">
+            AND b.docreltime >= #{QUERY_START_TIME}
+        </if>
+        <if test="QUERY_END_TIME != null">
+            AND b.docreltime &lt;= #{QUERY_END_TIME}
+        </if>
+        and a.CHANNELID not in(select channel_id from trs_hycloud_iip.gf_filter_channel)
+        and a.status >=0
+        and b.docstatus in(8,10,12,1027)
+        group by b.CHNLID
+        order by DIFDAY desc
+        <if test="DATA_LIMIT != null">
+            LIMIT ${START_POS},${PAGE_SIZE}
+        </if>
+    </select>
+
+
+    <select id="queryChannelUpdateInfoTotal" resultType="hashmap" parameterType="hashmap">
+        select count(*) as TOTAL from (
+            select 1
+            from trs_hycloud_iip.wcmchannel a,trs_hycloud_iip.wcmchnldoc b,trs_hycloud_iip.gf_channel_limit c
+            where a.CHANNELID = b.CHNLID
+            and a.CHANNELID = c.channel_id
+            AND C.UPDATE_DAYS > 0
+            and a.siteid in(${SITE_LIST})
+            <if test="SITE_ID != null">
+                AND a.siteid = #{SITE_ID}
+            </if>
+            <if test="QUERY_START_TIME != null">
+                AND b.docreltime >= #{QUERY_START_TIME}
+            </if>
+            <if test="QUERY_END_TIME != null">
+                AND b.docreltime &lt;= #{QUERY_END_TIME}
+            </if>
+            and a.CHANNELID not in(select channel_id from trs_hycloud_iip.gf_filter_channel)
+            and a.status >=0
+            and b.docstatus in(8,10,12,1027)
+            group by b.CHNLID
+        ) aa
+    </select>
+
+
+    <select id="queryGfKnowlege12345List" resultType="hashmap" parameterType="hashmap">
+        select ID,TITLE,CONTENT,DEPART,C_TYPE
+        from trs_hycloud_iip.gf_knowlege_12345
+        where 1=1
+        <if test="ID != null">
+            AND ID  = #{ID}
+        </if>
+        <if test="QUERY_NAME != null">
+            AND (TITLE like '%${QUERY_NAME}%' or CONTENT like '%${QUERY_NAME}%' or C_TYPE like '%${QUERY_NAME}%')
+        </if>
+        <if test="QUERY_AREA != null">
+            AND (TITLE like '%${QUERY_AREA}%')
+        </if>
+        <if test="DEPART != null">
+            AND DEPART like '%${DEPART}%'
+        </if>
+        order by C_TYPE desc
+        <if test="DATA_LIMIT != null">
+            LIMIT ${START_POS},${PAGE_SIZE}
+        </if>
+    </select>
+    <select id="queryGfKnowlege12345Totle" resultType="hashmap" parameterType="hashmap">
+        select count(*) as TOTAL
+        from trs_hycloud_iip.gf_knowlege_12345
+        where 1=1
+        <if test="ID != null">
+            AND ID  = #{ID}
+        </if>
+        <if test="QUERY_NAME != null">
+            AND (TITLE like '%${QUERY_NAME}%' or CONTENT like '%${QUERY_NAME}%'  or C_TYPE like '%${QUERY_NAME}%')
+        </if>
+        <if test="QUERY_AREA != null">
+            AND (TITLE like '%${QUERY_AREA}%')
+        </if>
+        <if test="DEPART != null">
+            AND DEPART like '%${DEPART}%'
+        </if>
+    </select>
+</mapper>
+

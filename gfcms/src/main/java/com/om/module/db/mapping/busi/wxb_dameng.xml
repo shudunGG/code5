@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="busiMapper_dameng">
+	<!--对微信、微博账号的管理-->
+	<insert id="saveGfWxbAccount" parameterType="hashmap">
+		INSERT INTO gfcms.GF_WXB_ACCOUNT(
+			TYPE,APPID,APPSEC,WX_TOKEN,
+			WX_ENCODINGAESKEY,CONFIG_TIME,NAME
+		)VALUES(
+			#{TYPE},#{APPID},#{APPSEC},#{WX_TOKEN,jdbcType=VARCHAR},
+			#{WX_ENCODINGAESKEY,jdbcType=VARCHAR},now(),#{NAME}
+		)
+    </insert>
+
+
+	<delete id="deleteGfWxbAccount" parameterType="hashmap">
+		delete from gfcms.GF_WXB_ACCOUNT where APPID = #{APPID} and APPSEC= #{APPSEC}
+    </delete>
+
+	<update id="updateGfWxbAccount" parameterType="hashmap">
+		update gfcms.GF_WXB_ACCOUNT
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="APPSEC != null">APPSEC=#{APPSEC},</if>
+			<if test="WX_TOKEN != null">WX_TOKEN=#{WX_TOKEN},</if>
+			<if test="WX_ENCODINGAESKEY != null">WX_ENCODINGAESKEY=#{WX_ENCODINGAESKEY},</if>
+			<if test="DOMAIN_URL != null">DOMAIN_URL=#{DOMAIN_URL},</if>
+			<if test="CONFIG_TIME != null">CONFIG_TIME=now(),</if>
+			<if test="NAME != null">NAME=#{NAME},</if>
+		</trim>
+		WHERE APPID = #{APPID}
+	</update>
+
+
+	<select id="queryGfWxbAccount" resultType="hashmap" parameterType="hashmap">
+		select  TYPE,APPID,APPSEC,WX_TOKEN,
+				WX_ENCODINGAESKEY,CONFIG_TIME,NAME
+		from gfcms.GF_WXB_ACCOUNT
+		where 1=1
+		<if test="TYPE != null">
+			AND TYPE = #{TYPE}
+		</if>
+		order by CONFIG_TIME desc
+	</select>
+
+	<select id="queryWcmUserByName" resultType="hashmap" parameterType="hashmap">
+		SELECT * FROM WCM.WCMUSER WHERE username=#{name}
+	</select>
+</mapper>
+

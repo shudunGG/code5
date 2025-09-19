@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.plugin.data.mapper.RuleTemplateMapper">
+	<!-- RuleTemplate的resultMap,column是给数据库列起的别名,它对应property类的属性 -->
+	<resultMap id="result_RuleTemplate_Map" type="org.springblade.plugin.data.entity.RuleTemplate">
+		<id column="id" property="id" />
+		<result column="type" property="type" />
+		<result column="code" property="code" />
+		<result column="problem_level" property="problemLevel" />
+		<result column="weight" property="weight" />
+		<result column="union_not_null" property="unionNotNull" />
+		<result column="check_field" property="checkField" />
+		<result column="describe" property="describe" />
+		<result column="enable_status" property="enableStatus" />
+		<result column="min_value" property="minValue" />
+		<result column="max_value" property="maxValue" />
+		<result column="check_type" property="checkType" />
+		<result column="check_formula" property="checkFormula" />
+		<result column="combine_repeat" property="combineRepeat" />
+		<result column="max_allowable_error_days" property="maxAllowableErrorDays" />
+		<result column="specification_type" property="specificationType" />
+		<result column="specification_subtype" property="specificationSubtype" />
+		<result column="min_length" property="minLength" />
+		<result column="max_length" property="maxLength" />
+		<result column="contain_string" property="containString" />
+		<result column="char_position" property="charPosition" />
+		<result column="specific_position" property="specificPosition" />
+		<result column="regex" property="regex" />
+		<result column="reference_mode" property="referenceMode" />
+		<result column="dic_biz_id" property="dicBizId" />
+		<result column="datasource_id" property="datasourceId" />
+		<result column="datasource_name" property="datasourceName" />
+		<result column="table_name" property="tableName" />
+		<result column="field_name" property="fieldName" />
+		<result column="theme_id" property="themeId" />
+		<result column="create_user" property="createUser" />
+		<result column="create_dept" property="createDept" />
+		<result column="create_time" property="createTime" />
+		<result column="update_user" property="updateUser" />
+		<result column="update_time" property="updateTime" />
+		<result column="status" property="status" />
+		<result column="is_deleted" property="isDeleted" />
+	</resultMap>
+
+</mapper>

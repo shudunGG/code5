@@ -1,0 +1,144 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="busiMapper">
+	<!--对模板的增、删、改、查-->
+	<insert id="saveBusiTemplateDef" parameterType="hashmap">
+		INSERT INTO busi_template_def(
+			TMPL_PK,TMPL_NAME,EXT_NAME,TMPL_DESC,
+			TMPL_TYPE,TMPL_LABEL,PUB_FILE_NAME,TMPL_FACE_PIC,TMPL_CONTENT,
+			IS_GLOBAL,OP_USER,OP_TIME,VERSION_NO,TMPL_CODE,SITE_PK,
+			IS_DEPLOY
+		)VALUES(
+			#{TMPL_PK},#{TMPL_NAME},#{EXT_NAME},#{TMPL_DESC,jdbcType=VARCHAR},
+			#{TMPL_TYPE},#{TMPL_LABEL,jdbcType=VARCHAR},#{PUB_FILE_NAME,jdbcType=VARCHAR},#{TMPL_FACE_PIC,jdbcType=VARCHAR},#{TMPL_CONTENT},
+			#{IS_GLOBAL},#{OP_USER},now(),#{VERSION_NO},#{TMPL_CODE},#{SITE_PK},
+			0
+		)
+    </insert>
+
+	<delete id="deleteBusiTemplateDef" parameterType="hashmap">
+		delete from busi_template_def where TMPL_PK = #{TMPL_PK}
+    </delete>
+
+	<update id="updateBusiTemplateDef" parameterType="hashmap">
+		update busi_template_def
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="TMPL_NAME != null">TMPL_NAME=#{TMPL_NAME},</if>
+			<if test="TMPL_DESC != null">TMPL_DESC=#{TMPL_DESC},</if>
+			<if test="TMPL_LABEL != null">TMPL_LABEL=#{TMPL_LABEL},</if>
+			<if test="PUB_FILE_NAME != null">PUB_FILE_NAME=#{PUB_FILE_NAME},</if>
+			<if test="TMPL_FACE_PIC != null">TMPL_FACE_PIC=#{TMPL_FACE_PIC},</if>
+			<if test="TMPL_CONTENT != null">TMPL_CONTENT=#{TMPL_CONTENT},</if>
+			<if test="IS_GLOBAL != null">IS_GLOBAL=#{IS_GLOBAL},</if>
+			<if test="OP_USER != null">OP_USER=#{OP_USER},OP_TIME=NOW(),</if>
+			<if test="true ">VERSION_NO=VERSION_NO+1,</if>
+			<if test="TMPL_HTML_PATH != null">TMPL_HTML_PATH=#{TMPL_HTML_PATH},</if>
+			<if test="TMPL_HTML_CONTENT != null">TMPL_HTML_CONTENT=#{TMPL_HTML_CONTENT},</if>
+			<if test="TMPL_HTML_PATH2 != null">TMPL_HTML_PATH2=#{TMPL_HTML_PATH2},</if>
+			<if test="TMPL_HTML_CONTENT2 != null">TMPL_HTML_CONTENT2=#{TMPL_HTML_CONTENT2},</if>
+			<if test="IS_DEPLOY != null">IS_DEPLOY=#{IS_DEPLOY},</if>
+			<if test="TMPL_TYPE != null">TMPL_TYPE=#{TMPL_TYPE},</if>
+		</trim>
+		WHERE TMPL_PK = #{TMPL_PK}
+	</update>
+
+	<select id="queryBusiTemplateDef" resultType="hashmap" parameterType="hashmap">
+		select 	distinct a.TMPL_PK,TMPL_NAME,EXT_NAME,TMPL_DESC,
+				TMPL_TYPE,TMPL_LABEL,PUB_FILE_NAME,TMPL_FACE_PIC,TMPL_CONTENT,
+				IS_GLOBAL,OP_USER,OP_TIME,VERSION_NO,a.TMPL_CODE,SITE_PK,
+				DATE_FORMAT(OP_TIME, '%Y-%m-%d %H:%i:%s') AS OP_TIME_STR,
+				b.tmpl_pk AS TMPL_FILE_PK
+		from busi_template_def a  LEFT JOIN busi_template_file b ON a.tmpl_pk = b.tmpl_pk
+ 		where 1=1
+		<if test="TMPL_PK != null">
+			AND a.TMPL_PK = #{TMPL_PK}
+		</if>
+		<if test="SITE_PK != null">
+			AND (a.SITE_PK = #{SITE_PK} OR IS_GLOBAL=1)
+		</if>
+		<if test="QUERY_NAME != null">
+			AND (a.TMPL_NAME like '%${QUERY_NAME}%' or TMPL_DESC like '%${QUERY_NAME}%' or TMPL_LABEL like '%${QUERY_NAME}%')
+		</if>
+		order by OP_TIME desc
+	</select>
+
+	<select id="queryIncludeTmplBySitePk" resultType="hashmap" parameterType="hashmap">
+		SELECT TMPL_PK
+		FROM busi_template_def a
+		WHERE a.site_pk = #{SITE_PK} and tmpl_type=3
+	</select>
+
+	<select id="queryTmplAndSiteCodeByTmplPk" resultType="hashmap" parameterType="hashmap">
+		SELECT a.TMPL_CODE,b.SITE_CODE,a.SITE_PK
+		FROM busi_template_def a,busi_site_def b
+		WHERE a.site_pk = b.site_pk AND a.TMPL_PK = #{TMPL_PK}
+	</select>
+
+	<insert id="saveBusiTemplateHis" parameterType="hashmap">
+		INSERT INTO busi_template_his(TMPL_PK,TMPL_CONTENT,OP_USER,OP_TIME,VERSION_NO)
+		select TMPL_PK,TMPL_CONTENT,OP_USER,OP_TIME,VERSION_NO+1 from busi_template_def where TMPL_PK = #{TMPL_PK}
+    </insert>
+
+
+	<insert id="saveBusiTemplateFile" parameterType="hashmap">
+		INSERT INTO busi_template_file(
+			TMPL_PK,TMPL_CODE,FILE_NAME_EXT,FILE_NAME_INIT,OP_TYPE,
+			FILE_PATH_ROOT,FILE_PATH_CONTEXT,FILE_PATH_URL,U_USER,U_TIME,
+			FILE_LENGTH,FILE_SAVE_AS_NAME,FILE_NAME_NEW
+		)VALUES(
+			#{TMPL_PK},#{TMPL_CODE},#{FILE_NAME_EXT},#{FILE_NAME_INIT},#{OP_TYPE},
+			#{FILE_PATH_ROOT},#{FILE_PATH_CONTEXT},#{FILE_PATH_URL,jdbcType=VARCHAR},#{U_USER,jdbcType=VARCHAR},now(),
+			#{FILE_LENGTH},#{FILE_SAVE_AS_NAME,jdbcType=VARCHAR},#{FILE_NAME_NEW}
+		)
+    </insert>
+	<select id="queryBusiTemplateFile" resultType="hashmap" parameterType="hashmap">
+		select 	TMPL_PK,TMPL_CODE,FILE_NAME_EXT,FILE_NAME_INIT,OP_TYPE,
+		FILE_PATH_ROOT,FILE_PATH_CONTEXT,FILE_PATH_URL,U_USER,U_TIME,
+		FILE_LENGTH,FILE_SAVE_AS_NAME,FILE_NAME_NEW
+		from busi_template_file a
+		where a.TMPL_PK = #{TMPL_PK}
+	</select>
+
+	<select id="queryTemplateUsed" resultType="hashmap" parameterType="hashmap">
+		SELECT 1 AS TYPE2,site_name AS NAME2  FROM busi_site_def WHERE site_tmpl=#{TMPL_PK} OR channel_tmpl=#{TMPL_PK} OR doc_tmpl=#{TMPL_PK}
+		union all
+		SELECT 2 AS TYPE2,channel_name AS NAME2  FROM busi_channel_def WHERE  channel_tmpl=#{TMPL_PK} OR doc_tmpl=#{TMPL_PK}
+		UNION ALL
+  		SELECT 3 AS TYPE2,title AS NAME2  FROM busi_document_def WHERE  tmplate_id=#{TMPL_PK} OR doc_tmpl=#{TMPL_PK}
+	</select>
+
+	<select id="queryChannelUsed" resultType="hashmap" parameterType="hashmap">
+		SELECT 1 AS TYPE2,title AS NAME2  FROM busi_document_def WHERE  channel_pk=#{CHANNEL_PK}
+		UNION ALL
+		SELECT 2 AS TYPE2,channel_name AS NAME2  FROM busi_channel_def WHERE  parent_pk=#{CHANNEL_PK}
+	</select>
+
+	<select id="queryChannelUsedBatChannelPk" resultType="hashmap" parameterType="hashmap">
+		SELECT 1 AS TYPE2,title AS NAME2  FROM busi_document_def WHERE  channel_pk in( ${CHANNEL_PK_ARR} )
+		UNION ALL
+		SELECT 2 AS TYPE2,channel_name AS NAME2  FROM busi_channel_def WHERE  parent_pk in( ${CHANNEL_PK_ARR} )
+	</select>
+
+	<select id="querySiteUsed" resultType="hashmap" parameterType="hashmap">
+		SELECT 1 AS TYPE2,channel_name AS NAME2  FROM busi_channel_def WHERE  site_pk=#{SITE_PK}
+	</select>
+
+
+	<select id="queryCheckTmplIsExist" resultType="hashmap" parameterType="hashmap">
+		SELECT TMPL_PK FROM busi_template_def
+		WHERE SITE_PK=#{SITE_PK} AND tmpl_code=#{TMPL_CODE}
+	</select>
+
+	<select id="queryBusiTemplateHisByTmplPK" resultType="hashmap" parameterType="hashmap">
+		SELECT TMPL_PK,TMPL_CONTENT,OP_TIME,
+			DATE_FORMAT(OP_TIME, '%Y-%m-%d %H:%i:%s') AS OP_TIME_STR,
+			VERSION_NO,LOGIN_NAME,REAL_NAME
+		FROM busi_template_his a LEFT JOIN sys_user_def b
+		ON a.op_user = b.user_id
+		WHERE tmpl_pk=#{TMPL_PK}
+		ORDER BY op_time DESC
+		LIMIT 0,5
+	</select>
+</mapper>
+

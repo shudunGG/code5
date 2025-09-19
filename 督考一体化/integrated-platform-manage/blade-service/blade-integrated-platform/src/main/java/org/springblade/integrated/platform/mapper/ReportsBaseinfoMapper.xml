@@ -1,0 +1,81 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.integrated.platform.mapper.ReportsBaseinfoMapper">
+
+
+    <!--单位阶段汇报信息-->
+    <select id="findList"  resultType="com.vingsoft.vo.ReportsBaseinfoVo">
+        <!-- 如有需要可以加上条件 where id= #{queryWrapper.id} -->
+        select r.id,r.stage_id stageId,r.stage,r.evaluation_id evaluationId,rp.report_status isHb,r.evaluation_type evaluationType,r.dept_id deptId,
+        r.dept_name deptName,q.is_appraise,rp.process_status processStatus,rp.process,rp.report_message reportMessage,
+        case when rp.process_status is null and r.create_time &gt;=sf.start_date and r.create_time &lt;=sf.end_date then '1'
+        when rp.process_status is not null and r.create_time &gt;=sf.start_date and r.create_time &lt;=sf.end_date then '2'
+        when r.create_time>sf.end_date  and rp.process_status is null then '3'
+        when r.create_time>sf.end_date  and rp.process_status is not null then '4' end as reportStatus,rp.id reportsId,
+        case when (select count(1) from apprise_files ab where ab.business_id=rp.id)>0 then 'Y' else 'N' end as hasFiles
+        from reports_baseinfo r
+        left join quarterly_evaluation q on q.id=r.evaluation_id
+        left join stage_information sf on sf.id=r.stage_id
+        left join reports rp on rp.baseid = r.id
+        where r.stage_id=#{stageId}
+
+        <if test='reportStatus == "1" '><!--待汇报-->
+            and rp.process_status is null
+        </if>
+
+        <if test='reportStatus == "2" '><!--已汇报-->
+            and rp.process_status is not null
+        </if>
+    </select>
+
+    <!--单位阶段汇报信息-->
+    <select id="findListAnnual"  resultType="com.vingsoft.vo.ReportsBaseinfoVo">
+        <!-- 如有需要可以加上条件 where id= #{queryWrapper.id} -->
+        select r.id,r.stage_id stageId,r.stage,r.evaluation_id evaluationId,rp.report_status,r.evaluation_type evaluationType,r.dept_id deptId,
+        r.dept_name deptName,q.is_appraise,rp.process_status processStatus,rp.process,rp.report_message reportMessage,
+        case when rp.process_status is null and r.create_time &gt;=sf.start_date and r.create_time &lt;=sf.end_date then '1'
+        when rp.process_status is not null and r.create_time &gt;=sf.start_date and r.create_time &lt;=sf.end_date then '2'
+        when r.create_time>sf.end_date  and rp.process_status is null then '3'
+        when r.create_time>sf.end_date  and rp.process_status is not null then '4' end as reportStatus,rp.id reportsId,
+        case when (select count(1) from apprise_files ab where ab.business_id=rp.id)>0 then 'Y' else 'N' end as hasFiles
+        from reports_baseinfo r
+        left join annual_evaluation q on q.id=r.evaluation_id
+        left join stage_information sf on sf.id=r.stage_id
+        left join reports rp on rp.baseid = r.id
+        where r.stage_id=#{stageId}
+
+        <if test='reportStatus == "1" '><!--待汇报-->
+            and rp.process_status is null
+        </if>
+
+        <if test='reportStatus == "2" '><!--已汇报-->
+            and rp.process_status is not null
+        </if>
+    </select>
+
+    <!--单位阶段汇报信息-->
+    <select id="findListAnnual"  resultType="com.vingsoft.vo.ReportsBaseinfoVo">
+        <!-- 如有需要可以加上条件 where id= #{queryWrapper.id} -->
+        select r.id,r.stage_id stageId,r.stage,r.evaluation_id evaluationId,r.evaluation_type evaluationType,r.dept_id deptId,
+        r.dept_name deptName,q.is_appraise,rp.process_status processStatus,rp.process,rp.report_message reportMessage,
+        case when rp.process_status is null and r.create_time &gt;=sf.start_date and r.create_time &lt;=sf.end_date then '1'
+        when rp.process_status is not null and r.create_time &gt;=sf.start_date and r.create_time &lt;=sf.end_date then '2'
+        when r.create_time>sf.end_date  and rp.process_status is null then '3'
+        when r.create_time>sf.end_date  and rp.process_status is not null then '4' end as reportStatus,rp.id reportsId,
+        case when (select count(1) from apprise_files ab where ab.business_id=rp.id)>0 then 'Y' else 'N' end as hasFiles
+        from reports_baseinfo r
+        left join annual_evaluation q on q.id=r.evaluation_id
+        left join stage_information sf on sf.id=r.stage_id
+        left join reports rp on rp.baseid = r.id
+        where r.create_time like CONCAT('%',#{rYear},'%')
+
+        <if test='reportStatus == "1" '><!--待汇报-->
+            and rp.process_status is null
+        </if>
+
+        <if test='reportStatus == "2" '><!--已汇报-->
+            and rp.process_status is not null
+        </if>
+    </select>
+
+</mapper>

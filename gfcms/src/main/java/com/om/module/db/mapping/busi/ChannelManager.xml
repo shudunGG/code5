@@ -1,0 +1,164 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="busiMapper">
+	<!--对栏目的增、删、改、查-->
+	<insert id="saveBusiChannelDef" parameterType="hashmap">
+		INSERT INTO busi_channel_def(
+			CHANNEL_PK,CHANNEL_ID,CHANNEL_CODE,CHANNEL_FULL_CODE,PARENT_PK,
+			CHANNEL_NAME,CHANNEL_DESC,CHANNEL_TYPE,CHANNEL_DIR,DOMAIN_URL,
+			SHOW_SEQ,CHANNEL_TMPL,DOC_TMPL,DATA_VIEW,SPECIAL_CHANNEL_ID,
+			IS_PUBLISH,IS_PUSH,IS_PULL,C_USER,C_TIME,
+			LINK_URL,CONTENT_PAGE,STS,SAVEASDIR,SITE_PK,
+			IS_AUDIT,IS_SIGN,IS_DEPLOY,HOME_PAGE
+		)VALUES(
+			#{CHANNEL_PK},#{CHANNEL_ID},#{CHANNEL_CODE},#{CHANNEL_FULL_CODE},#{PARENT_PK},
+			#{CHANNEL_NAME},#{CHANNEL_DESC,jdbcType=VARCHAR},#{CHANNEL_TYPE},#{CHANNEL_DIR},#{DOMAIN_URL,jdbcType=VARCHAR},
+			#{SHOW_SEQ},#{CHANNEL_TMPL,jdbcType=VARCHAR},#{DOC_TMPL,jdbcType=VARCHAR},#{DATA_VIEW,jdbcType=VARCHAR},#{SPECIAL_CHANNEL_ID,jdbcType=VARCHAR},
+			#{IS_PUBLISH},#{IS_PUSH},#{IS_PULL},#{C_USER},now(),
+			#{LINK_URL},#{CONTENT_PAGE,jdbcType=VARCHAR},0,#{SAVEASDIR,jdbcType=VARCHAR},#{SITE_PK},
+			#{IS_AUDIT},#{IS_SIGN},0,#{HOME_PAGE,jdbcType=VARCHAR}
+		)
+    </insert>
+
+
+	<delete id="deleteBusiChannelDef" parameterType="hashmap">
+		delete from busi_channel_def where CHANNEL_PK = #{CHANNEL_PK}
+    </delete>
+
+	<update id="updateBusiChannelDef" parameterType="hashmap">
+		update busi_channel_def
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="CHANNEL_NAME != null">CHANNEL_NAME=#{CHANNEL_NAME},</if>
+			<if test="CHANNEL_DESC != null">CHANNEL_DESC=#{CHANNEL_DESC},</if>
+			<if test="CHANNEL_TYPE != null">CHANNEL_TYPE=#{CHANNEL_TYPE},</if>
+			<if test="DOMAIN_URL != null">DOMAIN_URL=#{DOMAIN_URL},</if>
+			<if test="SHOW_SEQ != null">SHOW_SEQ=#{SHOW_SEQ},</if>
+			<if test="CHANNEL_TMPL != null">CHANNEL_TMPL=#{CHANNEL_TMPL},</if>
+			<if test="DOC_TMPL != null">DOC_TMPL=#{DOC_TMPL},</if>
+			<if test="SPECIAL_CHANNEL_ID != null">SPECIAL_CHANNEL_ID=#{SPECIAL_CHANNEL_ID},</if>
+			<if test="IS_PUSH != null">IS_PUSH=#{IS_PUSH},</if>
+			<if test="IS_PULL != null">IS_PULL=#{IS_PULL},</if>
+			<if test="IS_AUDIT != null">IS_AUDIT=#{IS_AUDIT},</if>
+			<if test="IS_SIGN != null">IS_SIGN=#{IS_SIGN},</if>
+			<if test="U_USER != null">U_USER=#{U_USER},U_TIME=now(),</if>
+			<if test="LINK_URL != null">LINK_URL=#{LINK_URL},</if>
+			<if test="CONTENT_PAGE != null">CONTENT_PAGE=#{CONTENT_PAGE},</if>
+			<if test="PUB_TYPE != null">PUB_TYPE=#{PUB_TYPE},</if>
+			<if test="ALL_PUB_STS != null">ALL_PUB_STS=#{ALL_PUB_STS},</if>
+			<if test="STS != null">STS=#{STS},</if>
+			<if test="SAVEASDIR != null">SAVEASDIR=#{SAVEASDIR},</if>
+			<if test="HOME_PAGE != null">HOME_PAGE=#{HOME_PAGE,jdbcType=VARCHAR},</if>
+			<if test="IS_DEPLOY != null">IS_DEPLOY=#{IS_DEPLOY},</if>
+		</trim>
+		WHERE CHANNEL_PK = #{CHANNEL_PK}
+	</update>
+
+
+	<select id="queryBusiChannelDef" resultType="hashmap" parameterType="hashmap">
+		select  CHANNEL_PK,CHANNEL_ID,CHANNEL_CODE,CHANNEL_FULL_CODE,PARENT_PK,
+				CHANNEL_NAME,CHANNEL_DESC,CHANNEL_TYPE,CHANNEL_DIR,DOMAIN_URL,
+				SHOW_SEQ,CHANNEL_TMPL,DOC_TMPL,DATA_VIEW,SPECIAL_CHANNEL_ID,
+				IS_PUBLISH,IS_PUSH,IS_PULL,C_USER,C_TIME,
+				U_USER,U_TIME,LINK_URL,CONTENT_PAGE,PUB_TYPE,
+				ALL_PUB_STS,STS,SAVEASDIR,SITE_PK,HOME_PAGE,
+				IS_AUDIT,IS_SIGN
+		from busi_channel_def
+		where 1=1
+		<if test="CHANNEL_PK != null">
+			AND CHANNEL_PK = #{CHANNEL_PK}
+		</if>
+		<if test="SITE_PK_ONLY_SON != null">
+			AND SITE_PK = #{SITE_PK_ONLY_SON}
+			<if test="CHANNEL_FULL_CODE != null">
+				AND CHANNEL_FULL_CODE like '${CHANNEL_FULL_CODE}%'  AND LENGTH(CHANNEL_FULL_CODE)=${CHANNEL_FULL_CODE_SON_LENGTH}
+			</if>
+			<if test="CHANNEL_FULL_CODE == null">
+				AND LENGTH(CHANNEL_FULL_CODE)=3
+			</if>
+		</if>
+
+		<if test="QUERY_NAME != null">
+			AND (CHANNEL_NAME like '%${QUERY_NAME}%' or CHANNEL_DESC like '%${QUERY_NAME}%' )
+		</if>
+		<if test="SITE_PK != null">
+			AND SITE_PK = #{SITE_PK}
+		</if>
+		<if test="PARENT_PK != null">
+			AND PARENT_PK = #{PARENT_PK}
+		</if>
+		<if test="DATA_SCALE_USER_ID != null">
+			AND CHANNEL_PK IN(SELECT CHANNEL_PK FROM sys_op_data_scale WHERE USER_ID=#{DATA_SCALE_USER_ID})
+		</if>
+		order by SHOW_SEQ
+	</select>
+
+	<insert id="saveBusiChannelTmplExt" parameterType="hashmap">
+		INSERT INTO busi_channel_tmpl_ext(
+			EXT_PK,CHANNEL_PK,TMPL_PK,FILE_NAME
+		)VALUES(
+			#{EXT_PK},#{CHANNEL_PK},#{TMPL_PK},#{FILE_NAME}
+		)
+    </insert>
+
+	<select id="queryTmplExtListByChannelPK" resultType="hashmap" parameterType="hashmap">
+		SELECT EXT_PK,b.CHANNEL_PK,b.TMPL_PK,b.FILE_NAME,a.TMPL_NAME,a.TMPL_TYPE,a.TMPL_CONTENT,a.TMPL_HTML_CONTENT
+		FROM busi_template_def a,busi_channel_tmpl_ext b
+		WHERE a.tmpl_pk = b.tmpl_pk
+		AND b.channel_pk= #{CHANNEL_PK}
+	</select>
+	<delete id="deleteBusiChannelTmplExt" parameterType="hashmap">
+		delete from busi_channel_tmpl_ext where EXT_PK = #{EXT_PK}
+    </delete>
+
+	<select id="queryMaxBusiChannelCode" resultType="hashmap" parameterType="hashmap">
+		SELECT IFNULL(MAX(CHANNEL_ID),0)+1 as MAXID
+		from busi_channel_def
+		where  PARENT_PK = #{PARENT_PK} and SITE_PK = #{SITE_PK}
+	</select>
+
+	<select id="queryChannelCodeByPk" resultType="hashmap" parameterType="hashmap">
+		SELECT CHANNEL_CODE FROM busi_channel_def WHERE  CHANNEL_PK = #{PARENT_PK}
+	</select>
+
+    <select id="querySPECIAL_CHANNEL_ID" resultType="hashmap" parameterType="hashmap">
+		SELECT SPECIAL_CHANNEL_ID FROM busi_channel_def WHERE  SPECIAL_CHANNEL_ID = #{SPECIAL_CHANNEL_ID} and site_pk=#{SITE_PK}
+	</select>
+
+
+	<select id="queryDocumentPathContext" resultType="hashmap" parameterType="hashmap">
+		SELECT SITE_CODE,CHANNEL_ID,a.SITE_PK,CHANNEL_CODE,a.DOMAIN_URL,
+		b.home_page as CHANNEL_PAGE,a.home_page as SITE_PAGE
+		FROM busi_site_def a,busi_channel_def b
+		WHERE a.site_pk = b.site_pk
+		and b.channel_pk=#{CHANNEL_PK}
+	</select>
+
+
+	<select id="queryChannnelTmplInfoByChannelPk" resultType="hashmap" parameterType="hashmap">
+		SELECT a.SITE_PK,a.SITE_CODE,a.SITE_NAME,a.SITE_DIR,a.DOMAIN_URL,
+			b.TMPL_CONTENT,b.PUB_FILE_NAME,b.TMPL_FACE_PIC,b.EXT_NAME,
+			c.CHANNEL_PK,c.CHANNEL_DIR,c.LINK_URL,C.CHANNEL_CODE
+		FROM busi_site_def a ,busi_template_def b,busi_channel_def c
+		WHERE c.channel_tmpl = b.tmpl_pk
+		AND c.site_pk = a.site_pk
+		AND  c.CHANNEL_PK=#{CHANNEL_PK}
+	</select>
+
+	<select id="queryChannnelTmplInfoByTmplPk" resultType="hashmap" parameterType="hashmap">
+		SELECT a.SITE_PK,a.SITE_CODE,a.SITE_NAME,a.SITE_DIR,a.DOMAIN_URL,
+			b.TMPL_CONTENT,b.PUB_FILE_NAME,b.TMPL_FACE_PIC,b.EXT_NAME,
+			c.CHANNEL_PK,c.CHANNEL_DIR,c.LINK_URL,C.CHANNEL_CODE
+		FROM busi_site_def a ,busi_template_def b,busi_channel_def c
+		WHERE c.channel_tmpl = b.tmpl_pk
+		AND c.site_pk = a.site_pk
+		AND  b.tmpl_pk=#{TMPL_PK}
+	</select>
+
+	<delete id="deleteBusiChannelByChannelPkArr" parameterType="hashmap">
+		delete from busi_channel_def where  CHANNEL_PK in( ${CHANNEL_PK_ARR} )
+    </delete>
+
+
+</mapper>
+

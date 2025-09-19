@@ -1,0 +1,290 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.integrated.platform.mapper.SupervisionPhasePlanMapper">
+  <resultMap id="BaseResultMap" type="com.vingsoft.entity.SupervisionPhasePlan">
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="serv_code" jdbcType="VARCHAR" property="servCode" />
+    <result column="start_time" jdbcType="TIMESTAMP" property="startTime" />
+    <result column="end_time" jdbcType="TIMESTAMP" property="endTime" />
+    <result column="phase_name" jdbcType="VARCHAR" property="phaseName" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="create_user" jdbcType="VARCHAR" property="createUser" />
+    <result column="create_dept" jdbcType="VARCHAR" property="createDept" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="update_user" jdbcType="VARCHAR" property="updateUser" />
+    <result column="update_dept" jdbcType="VARCHAR" property="updateDept" />
+    <result column="requirement" jdbcType="VARCHAR" property="requirement" />
+    <result column="requirement" jdbcType="VARCHAR" property="requirement" />
+    <result column="phase_code" jdbcType="VARCHAR" property="phaseCode" />
+    <result column="phase_status" jdbcType="VARCHAR" property="phaseStatus" />
+    <result column="is_enable" jdbcType="VARCHAR" property="isEnable" />
+    <result column="report_Status" jdbcType="VARCHAR" property="reportStatus" />
+    <result column="remark" jdbcType="VARCHAR" property="remark" />
+    <result column="sort" jdbcType="BIGINT" property="sort" />
+      <collection property="supervisionPhaseRemindList" ofType="com.vingsoft.entity.SupervisionPhaseRemind" columnPrefix="Remind_">
+          <id column="id" jdbcType="BIGINT" property="id" />
+          <result column="serv_code" jdbcType="VARCHAR" property="servCode" />
+          <result column="phase_id" jdbcType="BIGINT" property="phaseId" />
+          <result column="phase_name" jdbcType="VARCHAR" property="phaseName" />
+          <result column="report_time" jdbcType="TIMESTAMP" property="reportTime" />
+          <result column="reminder_time" jdbcType="BIGINT" property="reminderTime" />
+          <result column="phase_code" jdbcType="VARCHAR" property="phaseCode" />
+      </collection>
+      <collection property="supervisionPhaseReportList" ofType="com.vingsoft.entity.SupervisionPhaseReport" columnPrefix="report_">
+          <id column="id" jdbcType="BIGINT" property="id" />
+          <result column="serv_code" jdbcType="VARCHAR" property="servCode" />
+          <result column="phase_id" jdbcType="BIGINT" property="phaseId" />
+          <result column="phase_name" jdbcType="VARCHAR" property="phaseName" />
+          <result column="report_dept" jdbcType="VARCHAR" property="reportDept" />
+          <result column="report_dept_name" jdbcType="VARCHAR" property="reportDeptName" />
+          <result column="report_user" jdbcType="VARCHAR" property="reportUser" />
+          <result column="report_user_name" jdbcType="VARCHAR" property="reportUserName" />
+          <result column="progress_status" jdbcType="VARCHAR" property="progressStatus" />
+          <result column="report_time" jdbcType="TIMESTAMP" property="reportTime" />
+          <result column="situation" jdbcType="LONGVARCHAR" property="situation" />
+          <result column="unfinished_remark" jdbcType="LONGVARCHAR" property="unfinishedRemark" />
+          <result column="rectification_measures" jdbcType="LONGVARCHAR" property="rectificationMeasures" />
+          <result column="report_message" jdbcType="LONGVARCHAR" property="reportMessage" />
+          <result column="report_Status" jdbcType="VARCHAR" property="reportStatus" />
+          <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+          <result column="create_user" jdbcType="VARCHAR" property="createUser" />
+          <result column="create_dept" jdbcType="VARCHAR" property="createDept" />
+          <result column="down_User_Id" jdbcType="VARCHAR" property="downUserId" />
+          <result column="down_User_Name" jdbcType="VARCHAR" property="downUserName" />
+          <result column="down_Status" jdbcType="VARCHAR" property="downStatus" />
+          <result column="parent_Id" jdbcType="VARCHAR" property="parentId" />
+          <result column="issue_User" jdbcType="VARCHAR" property="issueUser" />
+          <result column="issue_User" jdbcType="VARCHAR" property="issueUser" />
+          <result column="issue_User_Name" jdbcType="VARCHAR" property="issueUserName" />
+          <result column="issue_Dept" jdbcType="VARCHAR" property="issueDept" />
+          <result column="issue_Dept_Name" jdbcType="VARCHAR" property="issueDeptName" />
+          <result column="issue_Status" jdbcType="VARCHAR" property="issueStatus" />
+      </collection>
+
+
+  </resultMap>
+  <sql id="Base_Column_List">
+    id, serv_code, start_time, end_time, phase_name, create_time, create_user, create_dept,
+    update_time, update_user, update_dept
+  </sql>
+
+    <select id="queryList" resultMap="BaseResultMap" >
+        SELECT
+            phase.id           ,
+            phase.serv_code    ,
+            phase.start_time   ,
+            phase.end_time     ,
+            phase.phase_name   ,
+            phase.requirement  ,
+            phase.create_time  ,
+            phase.create_user  ,
+            phase.create_dept  ,
+            phase.update_time  ,
+            phase.update_user  ,
+            phase.update_dept  ,
+            phase.phase_code   ,
+            phase.phase_status ,
+            case when date_format( phase.start_time , '%Y-%m-%d' )<![CDATA[<=]]> date_format( now( ) , '%Y-%m-%d' )<![CDATA[&&]]> date_format( phase.end_time , '%Y-%m-%d' )>= date_format( now( ) , '%Y-%m-%d' )
+            then 1
+            else 0 end is_enable,
+            phase.report_status,
+            phase.remark       ,
+            phase.sort         ,
+            remind.id             remind_id           ,
+            remind.serv_code      remind_serv_code    ,
+            remind.phase_id       remind_phase_id     ,
+            remind.phase_name     remind_phase_name   ,
+            remind.report_time    remind_report_time  ,
+            remind.reminder_time  remind_reminder_time,
+            remind.phase_code     remind_phase_code   ,
+            remind.create_time    remind_create_time  ,
+            remind.create_user    remind_create_user  ,
+            remind.create_dept    remind_create_dept  ,
+            remind.update_time    remind_update_time  ,
+            remind.update_user    remind_update_user  ,
+            remind.update_dept    remind_update_dept,
+        report.id                      report_id                      ,
+        report.serv_code               report_serv_code               ,
+        report.phase_id                report_phase_id                ,
+        report.phase_name              report_phase_name              ,
+        report.report_dept             report_report_dept             ,
+        report.report_dept_name        report_report_dept_name        ,
+        report.report_user             report_report_user             ,
+        report.report_user_name        report_report_user_name        ,
+        report.progress_status         report_progress_status         ,
+        report.situation               report_situation               ,
+        report.unfinished_remark       report_unfinished_remark       ,
+        report.rectification_measures  report_rectification_measures  ,
+        report.report_time             report_report_time             ,
+        report.report_message          report_report_message          ,
+        report.report_status           report_report_status           ,
+        report.remind_report_time      report_remind_report_time      ,
+        report.create_user             report_create_user             ,
+        report.create_dept             report_create_dept             ,
+        report.create_time             report_create_time             ,
+        report.update_user             report_update_user             ,
+        report.update_time             report_update_time             ,
+        report.status                  report_status                  ,
+        report.is_deleted              report_is_deleted,
+        report.down_User_Id            report_down_User_Id,
+        report.down_User_Name          report_down_User_Name,
+        report.down_Status             report_down_Status
+        from supervision_phase_plan phase
+        LEFT JOIN supervision_phase_remind remind on phase.phase_code=remind.phase_code
+        left JOIN supervision_phase_report_all report on phase.id = report.phase_id
+        <if test="deptId != null and deptId!='' " >
+            and report.report_dept = #{deptId}
+        </if>
+        <where>
+            ${ew.sqlSegment}
+        </where>
+    </select>
+
+    <select id="queryListHB" resultMap="BaseResultMap" >
+        SELECT
+        phase.id           ,
+        phase.serv_code    ,
+        phase.start_time   ,
+        phase.end_time     ,
+        phase.phase_name   ,
+        phase.requirement  ,
+        phase.create_time  ,
+        phase.create_user  ,
+        phase.create_dept  ,
+        phase.update_time  ,
+        phase.update_user  ,
+        phase.update_dept  ,
+        phase.phase_code   ,
+        phase.phase_status ,
+        case when date_format( phase.start_time , '%Y-%m-%d' )<![CDATA[<=]]> date_format( now( ) , '%Y-%m-%d' )<![CDATA[&&]]> date_format( phase.end_time , '%Y-%m-%d' )>= date_format( now( ) , '%Y-%m-%d' )
+        then 1
+        else 0 end is_enable,
+        phase.report_status,
+        phase.remark       ,
+        phase.sort         ,
+        remind.id             remind_id           ,
+        remind.serv_code      remind_serv_code    ,
+        remind.phase_id       remind_phase_id     ,
+        remind.phase_name     remind_phase_name   ,
+        remind.report_time    remind_report_time  ,
+        remind.reminder_time  remind_reminder_time,
+        remind.phase_code     remind_phase_code   ,
+        remind.create_time    remind_create_time  ,
+        remind.create_user    remind_create_user  ,
+        remind.create_dept    remind_create_dept  ,
+        remind.update_time    remind_update_time  ,
+        remind.update_user    remind_update_user  ,
+        remind.update_dept    remind_update_dept  ,
+        report.id                      report_id                      ,
+        report.serv_code               report_serv_code               ,
+        report.phase_id                report_phase_id                ,
+        report.phase_name              report_phase_name              ,
+        report.report_dept             report_report_dept             ,
+        report.report_dept_name        report_report_dept_name        ,
+        report.report_user             report_report_user             ,
+        report.report_user_name        report_report_user_name        ,
+        report.progress_status         report_progress_status         ,
+        report.situation               report_situation               ,
+        report.unfinished_remark       report_unfinished_remark       ,
+        report.rectification_measures  report_rectification_measures  ,
+        report.report_time             report_report_time             ,
+        report.report_message          report_report_message          ,
+        report.report_status           report_report_status           ,
+        report.remind_report_time      report_remind_report_time      ,
+        report.create_user             report_create_user             ,
+        report.create_dept             report_create_dept             ,
+        report.create_time             report_create_time             ,
+        report.update_user             report_update_user             ,
+        report.update_time             report_update_time             ,
+        report.status                  report_status                  ,
+        report.is_deleted              report_is_deleted,
+        report.down_User_Id            report_down_User_Id,
+        report.down_User_Name          report_down_User_Name,
+        report.down_Status             report_down_Status,
+        report.parent_id   report_parent_id,
+        report.issue_user  report_issue_user,
+        report.issue_user_name  report_issue_user_name,
+        report.issue_dept   report_issue_dept,
+        report.issue_dept_name    report_issue_dept_name,
+        report.issue_status     report_issue_status
+        from supervision_phase_plan phase
+        LEFT JOIN supervision_phase_remind remind on phase.phase_code=remind.phase_code
+        left JOIN supervision_phase_report report on phase.id = report.phase_id
+        <where>
+            ${ew.sqlSegment}
+        </where>
+    </select>
+
+    <select id="queryListHBAll" resultMap="BaseResultMap" >
+        SELECT
+        phase.id           ,
+        phase.serv_code    ,
+        phase.start_time   ,
+        phase.end_time     ,
+        phase.phase_name   ,
+        phase.requirement  ,
+        phase.create_time  ,
+        phase.create_user  ,
+        phase.create_dept  ,
+        phase.update_time  ,
+        phase.update_user  ,
+        phase.update_dept  ,
+        phase.phase_code   ,
+        phase.phase_status ,
+        case when date_format( phase.start_time , '%Y-%m-%d' )<![CDATA[<=]]> date_format( now( ) , '%Y-%m-%d' )<![CDATA[&&]]> date_format( phase.end_time , '%Y-%m-%d' )>= date_format( now( ) , '%Y-%m-%d' )
+        then 1
+        else 0 end is_enable,
+        phase.report_status,
+        phase.remark       ,
+        phase.sort         ,
+        remind.id             remind_id           ,
+        remind.serv_code      remind_serv_code    ,
+        remind.phase_id       remind_phase_id     ,
+        remind.phase_name     remind_phase_name   ,
+        remind.report_time    remind_report_time  ,
+        remind.reminder_time  remind_reminder_time,
+        remind.phase_code     remind_phase_code   ,
+        remind.create_time    remind_create_time  ,
+        remind.create_user    remind_create_user  ,
+        remind.create_dept    remind_create_dept  ,
+        remind.update_time    remind_update_time  ,
+        remind.update_user    remind_update_user  ,
+        remind.update_dept    remind_update_dept  ,
+        report.id                      report_id                      ,
+        report.serv_code               report_serv_code               ,
+        report.phase_id                report_phase_id                ,
+        report.phase_name              report_phase_name              ,
+        report.report_dept             report_report_dept             ,
+        report.report_dept_name        report_report_dept_name        ,
+        report.report_user             report_report_user             ,
+        report.report_user_name        report_report_user_name        ,
+        report.progress_status         report_progress_status         ,
+        report.situation               report_situation               ,
+        report.unfinished_remark       report_unfinished_remark       ,
+        report.rectification_measures  report_rectification_measures  ,
+        report.report_time             report_report_time             ,
+        report.report_message          report_report_message          ,
+        report.report_status           report_report_status           ,
+        report.remind_report_time      report_remind_report_time      ,
+        report.create_user             report_create_user             ,
+        report.create_dept             report_create_dept             ,
+        report.create_time             report_create_time             ,
+        report.update_user             report_update_user             ,
+        report.update_time             report_update_time             ,
+        report.status                  report_status                  ,
+        report.is_deleted              report_is_deleted,
+        report.down_User_Id            report_down_User_Id,
+        report.down_User_Name          report_down_User_Name,
+        report.down_Status             report_down_Status
+        from supervision_phase_plan phase
+        LEFT JOIN supervision_phase_remind remind on phase.phase_code=remind.phase_code
+        left JOIN supervision_phase_report_all report on phase.id = report.phase_id
+        <if test="deptId != null and deptId!='' " >
+            and report.report_dept = #{deptId}
+        </if>
+        <where>
+            ${ew.sqlSegment}
+        </where>
+    </select>
+
+</mapper>

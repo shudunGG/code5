@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.integrated.platform.mapper.QuarterlySumScoreMapper">
+
+
+    <select id="avgQuarterlySumScore" parameterType="map" resultType="com.vingsoft.entity.QuarterlySumScore">
+        select a.responsible_unit_name,a.appraise_deptid,a.appraise_deptname,
+        avg(a.quarterly_sum_score) quarterly_sum_score  from(select responsible_unit_name,
+        appraise_deptid,appraise_deptname,sum(quarterly_sum_score) quarterly_sum_score
+        from quarterly_sum_score where is_deleted = 0
+
+        <if test="responsibleUnitId != null">
+            and responsible_unit_id in(#{responsibleUnitId})
+        </if>
+        <if test="appraiseDeptids != null">
+            and appraise_deptid in
+            <foreach collection="appraiseDeptids" item="Deptid" open="(" separator="," close=")">
+                #{Deptid}
+            </foreach>
+        </if>
+        group by check_classify,responsible_unit_id) as a
+
+    </select>
+
+    <select id="getTotalWeight" parameterType="java.lang.String" resultType="java.util.Map">
+        SELECT ifnull( sum( weight ), 0 ) AS totalWeight FROM quarterly_evaluation
+        WHERE check_object_id LIKE CONCAT('%',#{responsibleUnitId},'%')
+          AND DATE_FORMAT( create_time, '%Y-%m-%d' ) LIKE CONCAT('%',#{stageYear},'%')
+          AND to_quarter = #{stage}
+          AND is_deleted = '0'
+          <if test="jdzbType != null and jdzbType != ''">AND jdzb_type = #{jdzbType}</if>
+    </select>
+</mapper>

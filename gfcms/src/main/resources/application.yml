@@ -1,0 +1,7 @@
+spring:
+  profiles:
+    active: dev # dev 开发环境 test测试环境(内网测试环境) prod生产环境 test195 195的测试环境
+    #active: test     # 内网测试环境
+    #active: test195  # 195外网测试环境
+    #active: prod  # 生产环境
+

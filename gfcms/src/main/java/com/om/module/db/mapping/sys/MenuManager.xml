@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+		"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="sysMapper">
+
+
+	<select id="querySysMenuConf" resultType="hashmap" parameterType="hashmap">
+		select MENU_ID,ICON,MENU_NAME,P_MENU_ID,URL,SUB_SYS
+		from sys_menu_conf
+		where SUB_SYS = #{SUB_SYS}
+		order by seq
+	</select>
+
+
+</mapper>
+

@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/order/!svn/ver/3145/power/fd/src/com/gs/jari/bo/message/resp
+END
+BaseMessage.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/order/!svn/ver/3145/power/fd/src/com/gs/jari/bo/message/resp/BaseMessage.java
+END
+Music.java
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/order/!svn/ver/3145/power/fd/src/com/gs/jari/bo/message/resp/Music.java
+END
+NewsMessage.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/order/!svn/ver/3145/power/fd/src/com/gs/jari/bo/message/resp/NewsMessage.java
+END
+Article.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/order/!svn/ver/3145/power/fd/src/com/gs/jari/bo/message/resp/Article.java
+END
+MusicMessage.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/order/!svn/ver/3145/power/fd/src/com/gs/jari/bo/message/resp/MusicMessage.java
+END
+TextMessage.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/order/!svn/ver/3145/power/fd/src/com/gs/jari/bo/message/resp/TextMessage.java
+END

@@ -1,0 +1,215 @@
+#http:
+#  port: 8088
+server:
+  port: 9445
+  servlet:
+    context-path: /gfcms #请求的时候带上工程名称
+    session:
+          timeout: 3600s # session会话超时时间
+#  ssl:
+#    #证书路径
+#    key-store: classpath:cert/https.pfx
+#    key-store-type: PKCS12
+#    #配置密码，就是在生成证书的时候输入的密码
+#    key-store-password: oy2Ub00J
+
+confweb:
+  #file-upload-path: d:/tmp     #文件上传目录(不配置的话为java.io.tmpdir目录)
+  #spring-session-open: false      #是否开启spring session,如果是多机环境需要开启(true/false)
+  #session-invalidate-time: 1800     #session失效时间(只在单机环境下生效，多机环境在SpringSessionConfig类中配置) 单位：秒
+  #session-validation-interval: 900  #多久检测一次失效的session(只在单机环境下生效) 单位：秒
+spring:
+  profiles:
+    active: test # 测试环境
+  mvc:
+    static-path-pattern: /static/**
+    view:
+      prefix: /WEB-INF/view
+  devtools:
+    restart:
+      enabled: false
+      additional-paths: src/main/java
+      exclude: static/**,WEB-INF/view/**
+  servlet:
+    multipart:
+      enabled: true
+      max-request-size: 100MB
+      max-file-size: 100MB
+     #location: /opt/up_file_temp/    #文件上传的零时路径
+  # 数据源配置
+  datasource:
+    type: com.alibaba.druid.pool.DruidDataSource
+    druid:
+      # MT库  10.215.9.192:1521:orcl  117.157.24.195:7010:orcl
+      defaultdb:
+        type: com.alibaba.druid.pool.DruidDataSource
+        url: jdbc:oracle:thin:@10.251.22.131:1521:test1
+        username: pz
+        password: '!fDK!4EW'
+        driverClassName: oracle.jdbc.OracleDriver
+        # 初始化，最小，最大连接数
+        initialSize: 3
+        minidle: 3
+        maxActive: 10
+        connection-error-retry-attempts: 1  # 超时重试次数
+        #必须为false（失败后会不断请求数据库，请求在TIME-WAIT，在数据库服务重启后，所有等待请求会访问数据库），
+        #为true上面参数才会生效（：true表示pool向数据库上面的重试请求连接此时失败后标记整个pool为block并close，
+        #就算后端数据库恢复正常也不进行重连，客户端对pool的请求都拒绝掉。false表示不会标记 pool为block，新的请求都会尝试去数据库请求connection。
+        #默认为false。因此，如果想让数据库和网络故障恢复之后，pool能继续请求正常资源必须把此项配置设为false）
+        break-after-acquire-failure: true
+        # 数据库连接等待的超时时间
+        maxWait: 60000
+        # 配置多久进行一次检测，检测需要关闭的空闲连接 单位毫秒
+        timeBetweenEvictionRunsMillis: 60000
+        validationQuery: SELECT 1 FROM dual
+        # 配置监控统计拦截的filters,去掉后，监控界面的sql无法统计
+        filters: stat,wall,slf4j
+      unionkt:
+        type: com.alibaba.druid.pool.DruidDataSource
+        url: jdbc:oracle:thin:@10.251.19.203:7010:orcl
+        username: OM
+        password: '5Nb@Hsx%'
+        driverClassName: oracle.jdbc.OracleDriver
+        # 初始化，最小，最大连接数
+        initialSize: 3
+        minidle: 3
+        maxActive: 10
+        connection-error-retry-attempts: 1  # 超时重试次数
+        break-after-acquire-failure: true
+        # 数据库连接等待的超时时间
+        maxWait: 60000
+        # 配置多久进行一次检测，检测需要关闭的空闲连接 单位毫秒
+        timeBetweenEvictionRunsMillis: 60000
+        validationQuery: SELECT 1 FROM dual
+        # 配置监控统计拦截的filters,去掉后，监控界面的sql无法统计
+        filters: stat,wall,slf4j
+
+      crmpbdbprod:
+        type: com.alibaba.druid.pool.DruidDataSource
+        url: jdbc:oracle:thin:@10.251.19.218:1521:orcl
+        username: OM
+        password: '5Nb@Hsx%'  #这种特殊符号开头的需要这样添加一下
+        driverClassName: oracle.jdbc.OracleDriver
+        # 初始化，最小，最大连接数
+        initialSize: 3
+        minidle: 3
+        maxActive: 10
+        connection-error-retry-attempts: 1  # 超时重试次数
+        break-after-acquire-failure: true
+        # 数据库连接等待的超时时间
+        maxWait: 60000
+        # 配置多久进行一次检测，检测需要关闭的空闲连接 单位毫秒
+        timeBetweenEvictionRunsMillis: 60000
+        validationQuery: SELECT 1 FROM dual
+        # 配置监控统计拦截的filters,去掉后，监控界面的sql无法统计
+        filters: stat,wall,slf4j
+      crmyydbins1:
+        type: com.alibaba.druid.pool.DruidDataSource
+        url: jdbc:oracle:thin:@10.251.19.208:1521:orcl
+        username: OM
+        password: '5Nb@Hsx%'
+        driverClassName: oracle.jdbc.OracleDriver
+        # 初始化，最小，最大连接数
+        initialSize: 3
+        minidle: 3
+        maxActive: 10
+        connection-error-retry-attempts: 1  # 超时重试次数
+        break-after-acquire-failure: true
+        # 数据库连接等待的超时时间
+        maxWait: 60000
+        # 配置多久进行一次检测，检测需要关闭的空闲连接 单位毫秒
+        timeBetweenEvictionRunsMillis: 60000
+        validationQuery: SELECT 1 FROM dual
+        # 配置监控统计拦截的filters,去掉后，监控界面的sql无法统计
+        filters: stat,wall,slf4j
+
+      czxxdbob60:
+        type: com.alibaba.druid.pool.DruidDataSource
+        url: jdbc:oracle:thin:@135.129.26.185:1521:orcl
+        username: OM
+        password: '5Nb@Hsx%'
+        driverClassName: oracle.jdbc.OracleDriver
+        # 初始化，最小，最大连接数
+        initialSize: 3
+        minidle: 3
+        maxActive: 10
+        connection-error-retry-attempts: 1  # 超时重试次数
+        break-after-acquire-failure: true
+        # 数据库连接等待的超时时间
+        maxWait: 60000
+        # 配置多久进行一次检测，检测需要关闭的空闲连接 单位毫秒
+        timeBetweenEvictionRunsMillis: 60000
+        validationQuery: SELECT 1 FROM dual
+        # 配置监控统计拦截的filters,去掉后，监控界面的sql无法统计
+        filters: stat,wall,slf4j
+    #activiti:
+    #database-schema-update: true
+    # 自动部署验证设置:true-开启（默认）、false-关闭
+    #check-process-definitions: false
+  #redis数据库配置
+  redis:
+    lettuce:
+      pool:
+        #连接池最大连接数（使用负值表示没有限制）
+        max-active: -1
+        #连接池中的最大空闲连接
+        max-idle: 100
+        #连接池最大阻塞等待时间（使用负值表示没有限制）
+        max-wait: -1ms
+        #连接池中的最小空闲连接
+        min-idle: 2
+  #redis数据库链接配置
+  host: 127.0.0.1
+  port: 6379
+  password:
+  database: 0
+mybatis:
+  config-location: classpath:mybatis/mybatis-config.xml
+  # mapper-locations: classpath:com/iconf/module/dao/mapping/**/*.xml
+  mapper-locations: classpath:com/om/module/db/mapping/**/*.xml
+logging:
+  config:
+    classpath:logback-spring.xml
+
+  #logback:
+  #  logdir: D:\iconf\
+  #  appname: sell
+
+# 配置slq打印日志
+#mybatis-plus:
+#  configuration:
+#    log-impl:org.apache.ibatis.logging.stdout.StdOutImpl
+#一体化配置全局变量
+pzparams:
+  #预发布地址
+  prePublicAddrSend: http://10.215.9.190:17020/cfIntf/open/syncCfScriptRecord
+  prePublicResultQuery: http://10.215.9.190:17020/cfIntf/open/queryCfSyncResult
+  allowAutoGenerateMac: 2C-27-D7-C8-BD-E3,00-50-56-AD-42-D4
+
+# 静态资源访问路径配置
+fileImportPath: /app/om/web/res_data/importFile/ # 批量导入时的上传文件的路径
+intfAddr4A: http://135.129.35.160:9000/uac/services/CheckAiuapTokenSoap?wsdl
+intfEnv: test
+intfEnvAddr: http://10.251.22.52:7445/i4a/intf4A.do
+
+
+tmplDonwReqPath: /cfFileRes/down/tmpl/**    # 模板下载地址
+tmplImportExeclDonwReqPath: /cfFileRes/down/importExecl/**  # execl批量导入下载地址
+needFileDonwReqPath: /cfFileRes/down/need/**             # 需求文件的下载地址
+autoTestDownReqPath: /cfFileRes/down/autoReport/**       # 自动化测试文件的访问目录
+autoTestImgReqPath: /cfFileRes/down/autoTestImg/**  # 自动化测试测图片访问目录
+tmplDownPath: /opt/bes/om-static/tmpl/model/   # 模板的下载地址和自动生成地址
+tmplImportPath: /opt/bes/om-static/tmpl/importExecl/ # 批量导入时的上传文件的路径
+needUploadPath: /opt/bes/om-static/need/upload/ # 需求录入时的上传路径
+autoTestUploadPath: /opt/bes/om-static/autoTest/ # 自动化测试测保存目录
+autoTestImgPath: /opt/bes/om-static/autoTestImg/ # 自动化测试测图片保存目录
+checkLogPath: /app/om/web/checklog/uplog/ # 审计日志生成目录
+checkLogPathBak:/app/om/web/checklog/uplogbak/ #审计日志上传成功后移动备份目录
+
+redirectIndexUrl: http://10.251.52.233:9445/omf/index.html
+ftp:
+  ip: 10.251.7.136
+  port: 21
+  user: esop
+  pwd: NxqRhA6;
+  logpath: /app10/ftpfile/esop/log_data

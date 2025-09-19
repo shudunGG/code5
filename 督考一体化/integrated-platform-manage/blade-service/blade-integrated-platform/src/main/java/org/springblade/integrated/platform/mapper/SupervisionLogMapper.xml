@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.integrated.platform.mapper.SupervisionLogMapper">
+  <resultMap id="BaseResultMap" type="com.vingsoft.entity.SupervisionLog">
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="serv_code" jdbcType="VARCHAR" property="servCode" />
+    <result column="operation_user" jdbcType="VARCHAR" property="operationUser" />
+    <result column="operation_user_name" jdbcType="VARCHAR" property="operationUserName" />
+    <result column="operation_dept" jdbcType="VARCHAR" property="operationDept" />
+    <result column="operation_dept_name" jdbcType="VARCHAR" property="operationDeptName" />
+    <result column="operation_type" jdbcType="VARCHAR" property="operationType" />
+    <result column="operation_time" jdbcType="TIMESTAMP" property="operationTime" />
+  </resultMap>
+  <select id="listQueryWrapper" resultType="com.vingsoft.entity.SupervisionLog" >
+      select log.* from supervision_log log
+      left join supervision_info info on info.serv_code=log.serv_code
+      left join(
+      SELECT plan.id, plan.serv_code,plan.report_status planUpStatus,re.id reporId,re.report_status,re.down_User_Name,re.down_User_Id,re.down_Status from supervision_phase_plan plan
+      left JOIN supervision_phase_report re on plan.id=re.phase_id
+      where date_format( plan.start_time , '%Y-%m-%d' )<![CDATA[<=]]> date_format( now( ) , '%Y-%m-%d' )
+      and date_format( plan.end_time , '%Y-%m-%d' )>= date_format( now( ) , '%Y-%m-%d' )and  report_dept=#{deptId}
+      )plan on  plan.serv_code = info.serv_code
+      left JOIN supervision_submit_audit audit on audit.serv_id=info.id and audit.status='0'
+      LEFT JOIN (SELECT COUNT(*) num,serv_code from supervision_evaluate where  is_deleted = 0 and evaluate_User=#{userId} GROUP by serv_code) eva on eva.serv_code=info.serv_code
+
+      <where>
+          ${ew.sqlSegment}
+      </where>
+  </select>
+</mapper>

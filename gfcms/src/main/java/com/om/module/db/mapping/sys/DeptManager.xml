@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="sysMapper">
+	<!--对部门信息的增、删、改、查-->
+	<insert id="saveSysDeptDef" parameterType="hashmap">
+		INSERT INTO sys_dept_def(
+			DEPT_PK,DEPT_CODE,DEPT_FULL_NAME,PARENT_DEPT_PK,DEPT_SHORT_NAME,
+			DEPT_DESC,SHOW_SEQ,DEPT_STS,DEPT_LEVEL_ID,IS_LEAF
+		)VALUES(
+			#{DEPT_PK},#{DEPT_CODE},#{DEPT_FULL_NAME},#{PARENT_DEPT_PK},#{DEPT_SHORT_NAME},
+			#{DEPT_DESC,jdbcType=VARCHAR},#{SHOW_SEQ},1,#{DEPT_LEVEL_ID},1
+		)
+    </insert>
+
+	<delete id="deleteSysDeptDef" parameterType="hashmap">
+		delete from sys_dept_def where DEPT_PK = #{DEPT_PK}
+    </delete>
+
+	<update id="updateSysDeptDef" parameterType="hashmap">
+		update sys_dept_def
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="DEPT_FULL_NAME != null">DEPT_FULL_NAME=#{DEPT_FULL_NAME},</if>
+			<if test="PARENT_DEPT_PK != null">PARENT_DEPT_PK=#{PARENT_DEPT_PK},</if>
+			<if test="DEPT_SHORT_NAME != null">DEPT_SHORT_NAME=#{DEPT_SHORT_NAME},</if>
+			<if test="DEPT_DESC != null">DEPT_DESC=#{DEPT_DESC},</if>
+			<if test="SHOW_SEQ != null">SHOW_SEQ=#{SHOW_SEQ},</if>
+			<if test="DEPT_STS != null">DEPT_STS=#{DEPT_STS},</if>
+			<if test="IS_LEAF != null">IS_LEAF=#{IS_LEAF},</if>
+		</trim>
+		WHERE DEPT_PK = #{DEPT_PK}
+	</update>
+
+	<select id="querySysDeptDef" resultType="hashmap" parameterType="hashmap">
+		select DEPT_PK,DEPT_CODE,DEPT_FULL_NAME,PARENT_DEPT_PK,DEPT_SHORT_NAME,
+			DEPT_DESC,SHOW_SEQ,DEPT_STS,DEPT_LEVEL_ID,IS_LEAF
+		from sys_dept_def
+		where 1=1
+		<if test="DEPT_PK != null">
+			AND DEPT_PK = #{DEPT_PK}
+		</if>
+		<if test="QUERY_NAME != null">
+			AND (DEPT_FULL_NAME like '%${QUERY_NAME}%' or DEPT_SHORT_NAME like '%${QUERY_NAME}%')
+		</if>
+		<if test="PARENT_DEPT_PK != null">
+			AND PARENT_DEPT_PK = #{PARENT_DEPT_PK}
+		</if>
+		<if test="DEPT_STS != null">
+			AND DEPT_STS = #{DEPT_STS}
+		</if>
+	</select>
+
+	<select id="queryMaxDeptCode" resultType="hashmap" parameterType="hashmap">
+		SELECT IFNULL(MAX(DEPT_LEVEL_ID),0)+1 as MAXID
+		from sys_dept_def
+		where  PARENT_DEPT_PK = #{PARENT_DEPT_PK}
+	</select>
+
+</mapper>
+

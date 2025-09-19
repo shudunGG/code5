@@ -1,0 +1,22 @@
+#服务器端口
+server:
+  port: 7008
+logging:
+  config: classpath:logback.xml
+#数据源配置
+spring:
+  datasource:
+    url: ${blade.datasource.prod.url}
+    username: ${blade.datasource.prod.username}
+    password: ${blade.datasource.prod.password}
+xxl:
+  job:
+    accessToken: ${xxl.job.prod.accessToken}
+    admin:
+      addresses: ${xxl.job.prod.admin.addresses}
+    executor:
+      appname: ${xxl.job.prod.executor.appname}
+      ip: ${xxl.job.prod.executor.ip}
+      logpath: ${xxl.job.prod.executor.logpath}
+      logretentiondays: ${xxl.job.prod.executor.logretentiondays}
+      port: ${xxl.job.prod.executor.port}

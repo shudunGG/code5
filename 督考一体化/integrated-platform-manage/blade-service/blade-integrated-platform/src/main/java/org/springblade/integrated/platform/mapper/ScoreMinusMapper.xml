@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.integrated.platform.mapper.ScoreMinusMapper">
+
+    <!--<select id="tree" resultMap="treeNodeResultMap">
+        select id, parent_id, dict_value as title, id as "value", id as "key" from blade_dict_biz where is_deleted = 0
+    </select>-->
+
+
+<select id="exportScoreMinus" resultType="org.springblade.integrated.platform.excel.ScoreMinusExcel">
+    <!-- 如有需要可以加上条件 where id= #{qw.id} -->
+    select dept_name,check_way ,minus_law,minus_project ,score from score_minus where is_deleted=0
+</select>
+
+    <update id="updateScoreMinusIsSend" parameterType="String">
+        update score_minus set is_send = '1' where is_deleted = '0' and is_deleted = '0' and date_format(create_time,'%Y')=#{year}
+    </update>
+</mapper>

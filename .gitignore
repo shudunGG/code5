@@ -1,0 +1,13 @@
+.DS_Store
+*.log
+target/
+build/
+out/
+*.jar
+*.war
+*.class
+.gradle/
+.idea/
+*.iml
+node_modules/
+dist/

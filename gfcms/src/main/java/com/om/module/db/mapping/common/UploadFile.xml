@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="commonMapper">
+	<!--对上传文件的增、删、改、查-->
+	<insert id="saveCmUploadRecord" parameterType="hashmap">
+		INSERT INTO cm_upload_record(
+			ID,UPLOAD_TYPE,PATH_ROOT,PATH_CONTEXT,PATH_FILE_NAME,
+			FILE_INIT_NAME,UPLOAD_USER_ID,CREATE_TIME,FIX,FILE_LENGTH,
+			IS_DEPLOY
+		)VALUES(
+			#{ID},#{UPLOAD_TYPE},#{PATH_ROOT},#{PATH_CONTEXT},#{PATH_FILE_NAME},
+			#{FILE_INIT_NAME},#{UPLOAD_USER_ID},now(),#{FIX},#{FILE_LENGTH},
+			#{IS_DEPLOY}
+		)
+    </insert>
+
+
+
+	<select id="queryCmUploadRecord" resultType="hashmap" parameterType="hashmap">
+		select ID,UPLOAD_TYPE,PATH_ROOT,PATH_CONTEXT,PATH_FILE_NAME,
+		FILE_INIT_NAME,UPLOAD_USER_ID,CREATE_TIME,FIX,FILE_LENGTH
+		from cm_upload_record
+		where 1=1
+		<if test="ID != null">
+			AND ID = #{ID}
+		</if>
+	</select>
+
+
+
+</mapper>
+

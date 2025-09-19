@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.integrated.platform.mapper.FollowInformationMapper">
+
+    <select id="getProjectFollow" parameterType="java.util.Map" resultType="com.vingsoft.vo.FollowProjectInformationVO" >
+        SELECT a.*,b.follow_user_id,b.follow_dept_id,b.follow_user,b.follow_date FROM project_summary a,follow_information b WHERE
+        a.is_deleted=0 and b.is_deleted=0 and b.business_id=a.id and b.business_type='3'
+        <if test="entity.followUserId!=null and entity.followUserId!='' ">
+            AND b.follow_user_id =#{entity.followUserId}
+        </if>
+        <if test="entity.xmdl!=null and entity.xmdl!='' ">
+            AND a.xmdl  =#{entity.xmdl}
+        </if>
+        <if test="entity.xmnf!=null and entity.xmnf!='' ">
+            AND a.xmnf like CONCAT('%',#{entity.xmnf},'%')
+        </if>
+        <if test="entity.deptIds!=null">
+            and b.follow_dept_id in
+            <foreach item="item" index="index" collection="entity.deptIds" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        <if test="entity.leaderIds!=null">
+            and b.follow_user_id in
+            <foreach item="item" index="index" collection="entity.leaderIds" open="(" separator="," close=")">
+                #{item}
+            </foreach>
+        </if>
+        order by b.follow_date desc
+    </select>
+</mapper>

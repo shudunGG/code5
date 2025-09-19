@@ -1,0 +1,103 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="sysMapper">
+	<!--权限表-->
+	<insert id="saveSysEntityDef" parameterType="hashmap">
+		INSERT INTO sys_entity_def(
+			ENTITY_ID,ENTITY_NAME,ENTITY_TYPE
+		)VALUES(
+			#{ENTITY_ID},#{ENTITY_NAME},#{ENTITY_TYPE}
+		)
+    </insert>
+
+	<delete id="deleteSysEntityDef" parameterType="hashmap">
+		delete from sys_entity_def where ENTITY_ID = #{ENTITY_ID}
+    </delete>
+
+	<delete id="deleteSysRoleEntityMapByEntityId" parameterType="hashmap">
+		delete from sys_role_entity_map where ENTITY_ID = #{ENTITY_ID}
+    </delete>
+
+	<select id="querySysEntityDef" resultType="hashmap" parameterType="hashmap">
+		select ENTITY_ID,ENTITY_NAME,ENTITY_TYPE,MODULE_NAME
+		from sys_entity_def
+		where 1=1
+		<if test="ENTITY_TYPE != null">
+			AND ENTITY_TYPE = #{ENTITY_TYPE}
+		</if>
+	</select>
+
+	<select id="querySysEntityListByUserId" resultType="hashmap" parameterType="hashmap">
+		SELECT D.ENTITY_ID,D.ENTITY_NAME,D.MODULE_NAME,D.ENTITY_TYPE
+		FROM sys_user_def a,sys_op_role_map b,sys_role_entity_map c,sys_entity_def d
+		WHERE a.user_id = b.user_id
+		AND b.role_id = c.role_id
+		AND c.entity_id = d.entity_id
+		AND a.user_id=#{USER_ID}
+	</select>
+
+
+
+	<select id="querySysEntityListByRoleId" resultType="hashmap" parameterType="hashmap">
+		select a.ENTITY_ID,ENTITY_NAME,ENTITY_TYPE,MODULE_NAME
+		from sys_entity_def a,sys_role_entity_map b
+		where a.ENTITY_ID = b.ENTITY_ID
+		AND b.role_id = #{ROLE_ID}
+	</select>
+
+
+	<!--角色表-->
+	<insert id="saveSysRoleDef" parameterType="hashmap">
+		INSERT INTO sys_role_def(
+			ROLE_ID,ROLE_NAME,ROLE_STS
+		)VALUES(
+			#{ROLE_ID},#{ROLE_NAME},1
+		)
+    </insert>
+
+	<delete id="deleteSysRoleDef" parameterType="hashmap">
+		delete from sys_role_def where ROLE_ID = #{ROLE_ID}
+    </delete>
+
+	<update id="updateSysRoleDef" parameterType="hashmap">
+		update sys_role_def
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="ROLE_NAME != null">ROLE_NAME=#{ROLE_NAME},</if>
+			<if test="ROLE_STS != null">ROLE_STS=#{ROLE_STS},</if>
+		</trim>
+		WHERE ROLE_ID = #{ROLE_ID}
+	</update>
+
+	<select id="querySysRoleDef" resultType="hashmap" parameterType="hashmap">
+		select ROLE_ID,ROLE_NAME,ROLE_STS
+		from sys_role_def
+		where 1=1
+		<if test="ROLE_ID != null">
+			AND ROLE_ID = #{ROLE_ID}
+		</if>
+		<if test="QUERY_NAME != null">
+			AND ROLE_NAME like '%${QUERY_NAME}%'
+		</if>
+		<if test="ROLE_STS != null">
+			AND ROLE_STS = #{ROLE_STS}
+		</if>
+	</select>
+
+	<!--角色权限定义表-->
+	<delete id="deleteSysRoleEntityMapByRoleId" parameterType="hashmap">
+		delete from sys_role_entity_map where ROLE_ID = #{ROLE_ID}
+    </delete>
+
+	<insert id="saveSysRoleEntityMapBat" parameterType="java.util.List">
+		insert into sys_role_entity_map(ROLE_ID,ENTITY_ID)values
+		<foreach collection="list" item="item" index="index" separator="," >
+			(
+			#{item.ROLE_ID},#{item.ENTITY_ID}
+			)
+		</foreach >
+	</insert>
+
+
+</mapper>
+

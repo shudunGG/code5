@@ -1,0 +1,14 @@
+#服务器端口
+server:
+  port: 8103
+#管理端口
+management:
+  server:
+    port: -1
+
+#数据源配置
+spring:
+  datasource:
+    url: ${blade.datasource.dev.url}
+    username: ${blade.datasource.dev.username}
+    password: ${blade.datasource.dev.password}

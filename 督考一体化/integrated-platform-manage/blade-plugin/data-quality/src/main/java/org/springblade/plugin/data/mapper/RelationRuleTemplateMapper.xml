@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.plugin.data.mapper.RelationRuleTemplateMapper">
+	<!-- RelationRuleTemplate的resultMap,column是给数据库列起的别名,它对应property类的属性 -->
+	<resultMap id="result_RelationRuleTemplate_Map" type="org.springblade.plugin.data.entity.RelationRuleTemplate">
+		<id column="id" property="id" />
+		<result column="join_table_name" property="joinTableName" />
+		<result column="join_table_id" property="joinTableId" />
+		<result column="join_type" property="joinType" />
+		<result column="theme_join_field" property="themeJoinField" />
+		<result column="theme_join_field_name" property="themeJoinFieldName" />
+		<result column="check_join_field" property="checkJoinField" />
+		<result column="rule_id" property="ruleId" />
+	</resultMap>
+</mapper>

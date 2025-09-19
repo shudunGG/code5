@@ -1,0 +1,19 @@
+server:
+  port: 8881
+
+spring:
+  cloud:
+    discovery:
+      reactive:
+        enabled: false
+    gateway:
+      discovery:
+        locator:
+          enabled: true
+    loadbalancer:
+      retry:
+        enabled: true
+#系统秘钥
+#blade:
+#  secure:
+#    privateKey: ce326aa3da114da29a4356015a57573d

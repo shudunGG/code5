@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="sysMapper">
+
+	<!--用户表-->
+	<insert id="saveSysUserDef" parameterType="hashmap">
+		INSERT INTO sys_user_def(
+			USER_ID,LOGIN_NAME,DEPT_CODE,LOGIN_PWD,REAL_NAME,
+			LINK_PHONE,EMAIL,SYSTEM,USER_STS,RETRY_COUNT,
+			LOCK_TIME,IS_ADMIN
+		)VALUES(
+			#{USER_ID},#{LOGIN_NAME},#{DEPT_CODE},#{LOGIN_PWD},#{REAL_NAME},
+			#{LINK_PHONE},#{EMAIL},#{SYSTEM},1,0,
+			now(),0
+		)
+    </insert>
+
+	<delete id="deleteSysUserDef" parameterType="hashmap">
+		delete from sys_user_def where USER_ID = #{USER_ID}
+    </delete>
+
+	<update id="updateSysUserDef" parameterType="hashmap">
+		update sys_user_def
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="LOGIN_NAME != null">LOGIN_NAME=#{LOGIN_NAME},</if>
+			<if test="DEPT_CODE != null">DEPT_CODE=#{DEPT_CODE},</if>
+			<if test="LOGIN_PWD != null">LOGIN_PWD=#{LOGIN_PWD},</if>
+			<if test="REAL_NAME != null">REAL_NAME=#{REAL_NAME},</if>
+			<if test="LINK_PHONE != null">LINK_PHONE=#{LINK_PHONE},</if>
+			<if test="EMAIL != null">EMAIL=#{EMAIL},</if>
+			<if test="SYSTEM != null">SYSTEM=#{SYSTEM},</if>
+			<if test="USER_STS != null">USER_STS=#{USER_STS},</if>
+			<if test="UNFREEZE != null">RETRY_COUNT=0,LOCK_TIME=NOW(),</if>
+			<if test="RETRY_COUNT != null">RETRY_COUNT=#{RETRY_COUNT},</if>
+			<if test="LOCK_TIME != null">LOCK_TIME=#{LOCK_TIME},</if>
+		</trim>
+		WHERE USER_ID = #{USER_ID}
+	</update>
+
+	<select id="querySysUserDef" resultType="hashmap" parameterType="hashmap">
+		select USER_ID,LOGIN_NAME,DEPT_CODE,LOGIN_PWD,REAL_NAME,
+			LINK_PHONE,EMAIL,SYSTEM,USER_STS,RETRY_COUNT,
+			LOCK_TIME,IS_ADMIN,SITE_PK
+		from sys_user_def
+		where 1=1
+		<if test="USER_ID != null">
+			AND USER_ID = #{USER_ID}
+		</if>
+		<if test="QUERY_NAME != null">
+			AND (LOGIN_NAME like '%${QUERY_NAME}%' or REAL_NAME like '%${QUERY_NAME}%' or LINK_PHONE like '%${QUERY_NAME}%' or EMAIL like '%${QUERY_NAME}%')
+		</if>
+		<if test="LOGIN_NAME != null">
+			AND LOGIN_NAME = #{LOGIN_NAME}
+		</if>
+		<if test="DEPT_CODE != null">
+			AND DEPT_CODE = #{DEPT_CODE}
+		</if>
+		<if test="USER_STS != null">
+			AND USER_STS = #{USER_STS}
+		</if>
+	</select>
+
+
+	<select id="querySysRoleListByUserId" resultType="hashmap" parameterType="hashmap">
+		select a.ROLE_ID,a.ROLE_NAME,a.ROLE_STS
+		from sys_role_def a,sys_op_role_map b
+		where a.ROLE_ID = B.ROLE_ID
+		and b.user_id = #{USER_ID}
+	</select>
+
+	<!--用户角色定义表-->
+	<delete id="deleteSysOpRoleMapByUserId" parameterType="hashmap">
+		delete from sys_op_role_map where USER_ID = #{USER_ID}
+    </delete>
+
+	<delete id="deleteSysOpRoleMapByRoleId" parameterType="hashmap">
+		delete from sys_op_role_map where ROLE_ID = #{ROLE_ID}
+    </delete>
+
+	<insert id="saveSysOpRoleMapBat" parameterType="java.util.List">
+		insert into sys_op_role_map(USER_ID,ROLE_ID)values
+		<foreach collection="list" item="item" index="index" separator="," >
+			(
+			#{item.USER_ID},#{item.ROLE_ID}
+			)
+		</foreach >
+
+	</insert>
+
+
+	<delete id="deleteSysOpDataScaleByOpId" parameterType="hashmap">
+		delete from sys_op_data_scale where USER_ID = #{USER_ID}
+    </delete>
+
+	<insert id="saveSysOpDataScaleBat" parameterType="java.util.List">
+		insert into sys_op_data_scale(USER_ID,CLASS_PK,SITE_PK,CHANNEL_PK)values
+		<foreach collection="list" item="item" index="index" separator="," >
+			(
+			#{item.USER_ID},#{item.CLASS_PK},#{item.SITE_PK},#{item.CHANNEL_PK}
+			)
+		</foreach >
+
+	</insert>
+</mapper>
+

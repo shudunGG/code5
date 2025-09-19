@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.plugin.data.mapper.QualityTestingLogMapper">
+	<!-- QualityTestingLog的resultMap,column是给数据库列起的别名,它对应property类的属性 -->
+	<resultMap id="result_QualityTestingLog_Map" type="org.springblade.plugin.data.entity.QualityTestingLog">
+		<id column="id" property="id" />
+		<result column="quality_testing_programme_id" property="qualityTestingProgrammeId" />
+		<result column="quality_testing_result" property="qualityTestingResult" />
+		<result column="statistical_time" property="statisticalTime" />
+		<result column="data_volume" property="dataVolume" />
+		<result column="error_volume" property="errorVolume" />
+		<result column="score" property="score" />
+		<result column="time_consuming" property="timeConsuming" />
+		<result column="executor" property="executor" />
+		<result column="quality_testing_time" property="qualityTestingTime" />
+		<result column="current_cycle" property="currentCycle" />
+		<result column="cycle_type" property="cycleType" />
+		<result column="model_id" property="modelId" />
+	</resultMap>
+</mapper>

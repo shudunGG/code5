@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="busiMapper">
+	<!--对信箱的增、删、改、查-->
+	<insert id="saveBusiAppMailBox" parameterType="hashmap">
+		INSERT INTO busi_app_mail_box(
+			SITE_PK,BOX_NAME,BOX_SECRET,STS,C_USER,
+			C_TIME,U_USER,U_TIME
+		)VALUES(
+			#{SITE_PK},#{BOX_NAME},#{BOX_SECRET},0,#{C_USER},
+			now(),#{U_USER},now()
+		)
+    </insert>
+
+	<delete id="deleteBusiAppMailBox" parameterType="hashmap">
+		delete from busi_app_mail_box where SITE_PK = #{SITE_PK} and BOX_NAME = #{BOX_NAME}
+    </delete>
+
+	<update id="updateBusiAppMailBox" parameterType="hashmap">
+		update busi_app_mail_box
+		<trim prefix="SET" suffixOverrides=",">
+			<if test="NEW_BOX_NAME != null">BOX_NAME=#{NEW_BOX_NAME},</if>
+			<if test="STS != null">STS=#{STS},</if>
+			<if test="U_USER != null">U_USER=#{U_USER},U_TIME=now(),</if>
+		</trim>
+		WHERE SITE_PK = #{SITE_PK} and BOX_NAME = #{BOX_NAME}
+	</update>
+
+	<select id="queryBusiAppMailBox" resultType="hashmap" parameterType="hashmap">
+		select  SITE_PK,BOX_NAME,BOX_SECRET,a.STS,a.C_USER,b.REAL_NAME,b.LOGIN_NAME,
+				a.C_TIME,a.U_USER,a.U_TIME,
+				DATE_FORMAT(a.C_TIME, '%Y-%m-%d %H:%i:%s') AS C_TIME_STR,
+				DATE_FORMAT(a.U_TIME, '%Y-%m-%d %H:%i:%s') AS U_TIME_STR
+		from busi_app_mail_box a,sys_user_def b
+		where a.C_USER = b.USER_ID
+		<if test="SITE_PK != null">
+			AND SITE_PK = #{SITE_PK}
+		</if>
+		<if test="BOX_NAME != null">
+			AND BOX_NAME = #{BOX_NAME}
+		</if>
+
+		<if test="STS != null">
+			AND a.STS = #{STS}
+		</if>
+		order by a.U_TIME desc
+	</select>
+
+</mapper>
+

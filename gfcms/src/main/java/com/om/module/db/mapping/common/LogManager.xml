@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="commonMapper">
+	<!--对上传文件的增、删、改、查-->
+	<insert id="saveCmLog" parameterType="hashmap">
+		INSERT INTO cm_log(
+			LOG_TIME,MODULE,OP_TYPE,USER_ID,
+			IP,PARAM,IS_ERR
+		)VALUES(
+			now(),#{MODULE},#{OP_TYPE},#{USER_ID},
+			#{IP,jdbcType=VARCHAR},#{PARAM,jdbcType=VARCHAR},#{IS_ERR,jdbcType=VARCHAR}
+		)
+    </insert>
+
+
+
+	<select id="queryCmLogTotal" resultType="hashmap" parameterType="hashmap">
+		select count(*) as TOTAL
+		FROM cm_log a LEFT JOIN sys_user_def b
+		ON a.user_id = b.user_id
+		where 1=1
+		<if test="START_TIME != null">
+			AND LOG_TIME &gt; '${START_TIME}'
+		</if>
+		<if test="END_TIME != null">
+			AND LOG_TIME &lt; '${END_TIME}'
+		</if>
+		<if test="MODULE != null">
+			AND MODULE = #{MODULE}
+		</if>
+		<if test="OP_TYPE != null">
+			AND OP_TYPE = #{OP_TYPE}
+		</if>
+		<if test="IS_ERR != null">
+			AND IS_ERR = #{IS_ERR}
+		</if>
+	</select>
+	<select id="queryCmLog" resultType="hashmap" parameterType="hashmap">
+		select a.LOG_TIME,a.MODULE,a.OP_TYPE,a.USER_ID,a.IP,a.PARAM,a.IS_ERR,
+			DATE_FORMAT(a.LOG_TIME, '%Y-%m-%d %H:%i:%s') AS LOG_TIME_STR,b.LOGIN_NAME,b.REAL_NAME,b.LINK_PHONE
+		FROM cm_log a LEFT JOIN sys_user_def b
+		ON a.user_id = b.user_id
+		where 1=1
+		<if test="START_TIME != null">
+			AND LOG_TIME &gt; '${START_TIME}'
+		</if>
+		<if test="END_TIME != null">
+			AND LOG_TIME &lt; '${END_TIME}'
+		</if>
+		<if test="MODULE != null">
+			AND MODULE = #{MODULE}
+		</if>
+		<if test="OP_TYPE != null">
+			AND OP_TYPE = #{OP_TYPE}
+		</if>
+		<if test="IS_ERR != null">
+			AND IS_ERR = #{IS_ERR}
+		</if>
+		order by LOG_TIME desc
+		<if test="DATA_LIMIT != null">
+			LIMIT ${START_POS},${PAGE_SIZE}
+		</if>
+
+	</select>
+
+
+
+</mapper>
+

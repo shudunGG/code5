@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.plugin.data.mapper.FunctionParameterMapper">
+	<!-- FunctionParameter的resultMap,column是给数据库列起的别名,它对应property类的属性 -->
+	<resultMap id="result_FunctionParameter_Map" type="org.springblade.plugin.data.entity.FunctionParameter">
+		<id column="id" property="id" />
+		<result column="parameter_name" property="parameterName" />
+		<result column="parameter_meaning" property="parameterMeaning" />
+		<result column="if_limit_value" property="ifLimitValue" />
+		<result column="select_value_range" property="selectValueRange" />
+		<result column="function_name" property="functionName" />
+		<result column="parameter_sort" property="parameterSort" />
+	</resultMap>
+</mapper>

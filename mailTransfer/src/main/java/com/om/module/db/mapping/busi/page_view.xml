@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="busiMapper">
+
+	<!--对页面浏览计数器的增、删、改、查-->
+	<insert id="saveGfPageViewDetail" parameterType="hashmap">
+		INSERT INTO gf_page_view_detail(
+			SITE_CODE,DOC_CODE,VIEW_TIME,IP,EXT_PARAM
+		)VALUES(
+			#{SITE_CODE},#{DOC_CODE},#{VIEW_TIME},#{IP,jdbcType=VARCHAR},#{EXT_PARAM,jdbcType=VARCHAR}
+		)
+    </insert>
+
+	<select id="queryGfPageViewGroupCount" resultType="hashmap" parameterType="hashmap">
+		SELECT SITE_CODE,DOC_CODE,count(*) as VIEW_COUNT
+		from gf_page_view_detail
+		group by SITE_CODE,DOC_CODE
+	</select>
+
+	<select id="queryGfPageViewArchive" resultType="hashmap" parameterType="hashmap">
+		SELECT SITE_CODE,DOC_CODE,sum(VIEW_COUNT) as VIEW_COUNT
+		from gf_page_view_archive
+		group by SITE_CODE,DOC_CODE
+	</select>
+
+	<select id="queryGfPageViewCount" resultType="hashmap" parameterType="hashmap">
+		SELECT count(*) as VIEW_COUNT
+		from gf_page_view_detail
+		where VIEW_TIME &lt; #{LIMIT_TIME}
+	</select>
+
+	<select id="queryGfPageViewDataArchive" resultType="hashmap" parameterType="hashmap">
+		SELECT SITE_CODE,DOC_CODE,count(*) as VIEW_COUNT,min(VIEW_TIME) as MIN_VIEW_TIME,,max(VIEW_TIME) as MAX_VIEW_TIME
+		from gf_page_view_detail
+		where VIEW_TIME &lt; #{LIMIT_TIME}
+		group by SITE_CODE,DOC_CODE
+	</select>
+
+	<insert id="saveGfPageViewArchiveBat" parameterType="java.util.List">
+		insert into gf_page_view_archive(SITE_CODE,DOC_CODE,BEGIN_TIME,END_TIME,VIEW_COUNT) values
+		<foreach collection="list" item="item" index="index" separator="," >
+			(
+			#{item.SITE_CODE},#{item.DOC_CODE},#{item.MIN_VIEW_TIME},#{item.MAX_VIEW_TIME},#{item.VIEW_COUNT}
+			)
+		</foreach >
+	</insert>
+
+	<delete id="delGfPageViewDetail" parameterType="hashmap">
+		delete  from  gf_page_view_detail where VIEW_TIME &gt;= #{LAST_MINVIEW_TIME} and VIEW_TIME &lt;=#{LAST_MAXVIEW_TIME}
+    </delete>
+
+	<!--
+	<select id="queryBusiChannelDef" resultType="hashmap" parameterType="hashmap">
+		select  CHANNEL_PK,CHANNEL_ID,CHANNEL_CODE,CHANNEL_FULL_CODE,PARENT_PK,
+				CHANNEL_NAME,CHANNEL_DESC,CHANNEL_TYPE,CHANNEL_DIR,DOMAIN_URL,
+				SHOW_SEQ,CHANNEL_TMPL,DOC_TMPL,DATA_VIEW,SPECIAL_CHANNEL_ID,
+				IS_PUBLISH,IS_PUSH,IS_PULL,C_USER,C_TIME,
+				U_USER,U_TIME,LINK_URL,CONTENT_PAGE,PUB_TYPE,
+				ALL_PUB_STS,STS,SAVEASDIR,SITE_PK,HOME_PAGE,
+				IS_AUDIT,IS_SIGN
+		from busi_channel_def
+		where 1=1
+		<if test="CHANNEL_PK != null">
+			AND CHANNEL_PK = #{CHANNEL_PK}
+		</if>
+		<if test="SITE_PK_ONLY_SON != null">
+			AND SITE_PK = #{SITE_PK_ONLY_SON}
+			<if test="CHANNEL_FULL_CODE != null">
+				AND CHANNEL_FULL_CODE like '${CHANNEL_FULL_CODE}%'  AND LENGTH(CHANNEL_FULL_CODE)=${CHANNEL_FULL_CODE_SON_LENGTH}
+			</if>
+			<if test="CHANNEL_FULL_CODE == null">
+				AND LENGTH(CHANNEL_FULL_CODE)=3
+			</if>
+		</if>
+
+		<if test="QUERY_NAME != null">
+			AND (CHANNEL_NAME like '%${QUERY_NAME}%' or CHANNEL_DESC like '%${QUERY_NAME}%' )
+		</if>
+		<if test="SITE_PK != null">
+			AND SITE_PK = #{SITE_PK}
+		</if>
+		<if test="PARENT_PK != null">
+			AND PARENT_PK = #{PARENT_PK}
+		</if>
+		<if test="DATA_SCALE_USER_ID != null">
+			AND CHANNEL_PK IN(SELECT CHANNEL_PK FROM sys_op_data_scale WHERE USER_ID=#{DATA_SCALE_USER_ID})
+		</if>
+		order by SHOW_SEQ
+	</select>
+	-->
+
+</mapper>
+

@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.plugin.data.mapper.FunctionComparisonMapper">
+	<!-- FunctionComparison的resultMap,column是给数据库列起的别名,它对应property类的属性 -->
+	<resultMap id="result_FunctionComparison_Map" type="org.springblade.plugin.data.entity.FunctionComparison">
+		<id column="id" property="id" />
+		<result column="expression" property="expression" />
+		<result column="inspection_name" property="inspectionName" />
+		<result column="function_category" property="functionCategory" />
+		<result column="mysql_function" property="mysqlFunction" />
+		<result column="oracle_function" property="oracleFunction" />
+		<result column="function_meaning" property="functionMeaning" />
+		<result column="usage_example" property="usageExample" />
+		<result column="parameter_count" property="parameterCount" />
+	</resultMap>
+
+</mapper>

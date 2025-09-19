@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="busiMapper">
+	<select id="queryZbBusiDocumentDef" resultType="hashmap" parameterType="hashmap">
+		SELECT a.DOC_PK,a.CHANNEL_PK,a.TITLE,a.FIRST_PAGE_TITLE,a.SOURCE,
+				a.WRITE_TIME,a.CONTENT,a.CONTENT_HTML,a.TOP_TITLE,a.BUTTOM_TITLE,
+				a.AUTHOR,a.KEYWORDS,a.ABSTRACTS,a.SOURCE_URL,a.C_USER,
+				a.C_TIME,a.VERSION_NO,a.STS,a.PUB_URL,a.PUB_FILE_NAME,
+				a.PUB_TIME,a.TMPLATE_ID,a.U_USER,a.U_TIME,a.DOC_TYPE,
+				a.LINK_URL,b.CHANNEL_NAME ${SELECT}
+		FROM busi_document_def a,busi_channel_def b
+		WHERE a.channel_pk = b.channel_pk
+		<if test="FINISH_FLAG != null">
+			AND a.sts=99 and a.is_deploy=99
+		</if>
+		<if test="DOC_PK != null">
+			AND a.doc_pk=#{DOC_PK}
+		</if>
+		<if test="SITE_PK != null">
+			AND b.site_pk=#{SITE_PK}
+		</if>
+		<if test="PARENT != null">
+			AND a.CHANNEL_PK = (select PARENT_PK from  busi_channel_def where CHANNEL_PK=#{CHANNEL_PK})
+		</if>
+		<if test="OWNER != null">
+			AND a.CHANNEL_PK=#{CHANNEL_PK}
+		</if>
+		<if test="CHANNEL_ID != null">
+			AND a.CHANNEL_PK = (select CHANNEL_PK from  busi_channel_def where CHANNEL_ID=#{CHANNEL_ID})
+		</if>
+		<if test="CHANNEL_NAME != null">
+			AND b.CHANNEL_NAME=#{CHANNEL_NAME}
+		</if>
+		<if test="CHILDINDEX != null">
+			AND a.CHANNEL_PK in (select CHANNEL_PK from  busi_channel_def where PARENT_PK=#{CHANNEL_PK} LIMIT ${CHILDINDEX},1 )
+		</if>
+		<if test="WHERE != null">
+			AND ${WHERE}
+		</if>
+
+		order by a.U_TIME desc
+		<if test="ORDER != null">
+			${ORDER}
+		</if>
+		<if test="TOTAL_NUM != null">
+			LIMIT ${STARTPOS},${TOTAL_NUM}
+		</if>
+	</select>
+
+
+	<select id="queryZbBusiDocumentCount" resultType="hashmap" parameterType="hashmap">
+		SELECT count(*) as CT
+		FROM busi_document_def a,busi_channel_def b
+		WHERE a.channel_pk = b.channel_pk and a.sts=99 and a.is_deploy=99
+		<if test="DOC_PK != null">
+			AND a.doc_pk=#{DOC_PK}
+		</if>
+		<if test="SITE_PK != null">
+			AND b.site_pk=#{SITE_PK}
+		</if>
+		<if test="PARENT != null">
+			AND a.CHANNEL_PK = (select PARENT_PK from  busi_channel_def where CHANNEL_PK=#{CHANNEL_PK})
+		</if>
+		<if test="OWNER != null">
+			AND a.CHANNEL_PK=#{CHANNEL_PK}
+		</if>
+		<if test="CHANNEL_ID != null">
+			AND a.CHANNEL_PK = (select CHANNEL_PK from  busi_channel_def where CHANNEL_ID=#{CHANNEL_ID})
+		</if>
+		<if test="CHANNEL_NAME != null">
+			AND b.CHANNEL_NAME=#{CHANNEL_NAME}
+		</if>
+		<if test="CHILDINDEX != null">
+			AND a.CHANNEL_PK in (select CHANNEL_PK from  busi_channel_def where PARENT_PK=#{CHANNEL_PK} LIMIT ${CHILDINDEX},1 )
+		</if>
+		<if test="WHERE != null">
+			AND ${WHERE}
+		</if>
+		<if test="TOTAL_NUM != null">
+			LIMIT ${STARTPOS},${TOTAL_NUM}
+		</if>
+	</select>
+
+	<select id="queryZbBusiDocumentFile" resultType="hashmap" parameterType="hashmap">
+		SELECT FILE_PK,a.SITE_PK,a.CHANNEL_PK,DOCUMENT_PK,a.SHOW_SEQ,
+		FILE_TYPE,FILE_NAME_EXT,FILE_NAME_INIT,FILE_NAME_NEW,FILE_PATH_ROOT,
+		FILE_PATH_CONTEXT,FILE_PATH_URL,a.U_USER,a.U_TIME,FILE_LENGTH,b.TITLE,b.PUB_URL
+		FROM busi_document_file a,busi_document_def b WHERE a.document_pk=b.doc_pk
+		<if test="DOCUMENT_PK != null">
+			and a.DOCUMENT_PK=#{DOCUMENT_PK}
+		</if>
+		<if test="SITE_PK != null">
+			AND a.SITE_PK = #{SITE_PK}
+		</if>
+		<if test="DOC_PK != null">
+			and a.DOCUMENT_PK in(SELECT doc_pk FROM busi_document_def WHERE title LIKE '%${DOC_TITLE}%' )
+		</if>
+		<if test="CHANNEL_NAME != null">
+			and a.CHANNEL_PK IN (SELECT CHANNEL_PK FROM busi_channel_def WHERE CHANNEL_NAME=#{CHANNEL_NAME})
+		</if>
+		<if test="MODE_PIC != null">
+			and file_type=1
+		</if>
+		<if test="MODE_FILE != null">
+			and file_type=3
+		</if>
+		<if test="RELATEDCOLUMN != null">
+			and file_name_init like '%${RELATEDCOLUMN}%'
+		</if>
+		ORDER BY U_TIME DESC
+		<if test="INDEX != null">
+			LIMIT ${INDEX},${LIMIT_NUM}
+		</if>
+	</select>
+
+	<select id="queryZbBusiChannel" resultType="hashmap" parameterType="hashmap">
+		select  a.CHANNEL_PK,a.CHANNEL_ID,a.CHANNEL_CODE,a.CHANNEL_FULL_CODE,a.PARENT_PK,
+				a.CHANNEL_NAME,a.CHANNEL_DESC,a.CHANNEL_TYPE,a.CHANNEL_DIR,a.DOMAIN_URL,
+				a.SHOW_SEQ,a.CHANNEL_TMPL,a.DOC_TMPL,a.DATA_VIEW,a.SPECIAL_CHANNEL_ID,
+				a.IS_PUBLISH,a.IS_PUSH,a.IS_PULL,a.C_USER,a.C_TIME,
+				a.U_USER,a.U_TIME,a.LINK_URL,a.CONTENT_PAGE,a.PUB_TYPE,
+				a.ALL_PUB_STS,a.STS,a.SAVEASDIR,a.SITE_PK,
+				a.HOME_PAGE,b.HOME_PAGE as SITE_HOME_PAGE
+		from busi_channel_def a,busi_site_def b
+		where a.SITE_PK = b.SITE_PK
+		<if test="CHANNEL_PK != null">
+			AND a.CHANNEL_PK = #{CHANNEL_PK}
+		</if>
+		<if test="PARENT != null">
+			AND a.CHANNEL_PK = (select PARENT_PK from  busi_channel_def where CHANNEL_PK=#{CHANNEL_PK})
+		</if>
+		<if test="PARENT_PK != null">
+			AND a.PARENT_PK = #{PARENT_PK}
+		</if>
+		<if test="OWNER != null">
+			AND a.CHANNEL_PK=#{CHANNEL_PK}
+		</if>
+		<if test="CHANNEL_NAME != null">
+			AND a.CHANNEL_NAME = #{CHANNEL_NAME}
+		</if>
+		<if test="SPECIAL_CHANNEL_ID != null">
+			AND a.SPECIAL_CHANNEL_ID = #{SPECIAL_CHANNEL_ID}
+		</if>
+		<if test="CHANNEL_ID != null">
+			AND a.CHANNEL_ID = #{CHANNEL_ID}
+		</if>
+		<if test="CHNLIDS != null">
+			AND a.CHNLIDS in( '${CHNLIDS}' )
+		</if>
+
+		<if test="SITE_PK != null">
+			AND a.SITE_PK = #{SITE_PK}
+		</if>
+		<if test="SITE_CODE != null">
+			AND b.SITE_CODE = #{SITE_CODE}
+		</if>
+		<if test="CHANNEL_CODE != null">
+			AND a.CHANNEL_CODE = #{CHANNEL_CODE}
+		</if>
+		<if test="CHILDINDEX != null">
+			AND a.CHANNEL_PK in (select CHANNEL_PK from  busi_channel_def where PARENT_PK=#{CHANNEL_PK} LIMIT ${CHILDINDEX},1 )
+		</if>
+		<if test="CHNLIDS != null">
+			AND a.CHILDTYPE in( '${CHILDTYPE}' )
+		</if>
+
+	</select>
+
+
+	<select id="queryZbHomeChannelInfo" resultType="hashmap" parameterType="hashmap">
+		select  a.CHANNEL_PK,a.CHANNEL_ID,a.CHANNEL_CODE,a.CHANNEL_FULL_CODE,a.PARENT_PK,
+		a.CHANNEL_NAME,a.CHANNEL_DESC,a.CHANNEL_TYPE,a.CHANNEL_DIR,a.DOMAIN_URL,
+		a.SHOW_SEQ,a.CHANNEL_TMPL,a.DOC_TMPL,a.DATA_VIEW,a.SPECIAL_CHANNEL_ID,
+		a.IS_PUBLISH,a.IS_PUSH,a.IS_PULL,a.C_USER,a.C_TIME,
+		a.U_USER,a.U_TIME,a.LINK_URL,a.CONTENT_PAGE,a.PUB_TYPE,
+		a.ALL_PUB_STS,a.STS,a.SAVEASDIR,a.SITE_PK,
+		a.HOME_PAGE
+		from busi_channel_def a
+		where a.CHANNEL_NAME like '%首页%' and SITE_PK = #{SITE_PK}
+	</select>
+
+
+
+	<select id="queryZbBusiTemplateFile" resultType="hashmap" parameterType="hashmap">
+		SELECT a.TMPL_PK,a.TMPL_CODE,a.FILE_NAME_EXT,a.FILE_NAME_INIT,a.OP_TYPE,a.FILE_PATH_ROOT,
+			a.FILE_PATH_CONTEXT,a.FILE_PATH_URL,a.U_USER,a.U_TIME,a.FILE_LENGTH,a.FILE_SAVE_AS_NAME,
+			b.SITE_PK
+		FROM busi_template_file a,busi_template_def b
+		WHERE a.TMPL_PK = b.TMPL_PK
+		<if test="TMPL_PK != null">
+			AND a.TMPL_PK=#{TMPL_PK}
+		</if>
+		<if test="SITE_PK != null">
+			AND b.SITE_PK = #{SITE_PK}
+		</if>
+		<if test="TMPL_CODE != null">
+			AND a.TMPL_CODE=#{TMPL_CODE}
+		</if>
+		<if test="FILE_NAME != null">
+			AND a.FILE_NAME_INIT=#{FILE_NAME}
+		</if>
+	</select>
+
+
+
+	<select id="queryZbBusiTemplateDef" resultType="hashmap" parameterType="hashmap">
+		SELECT TMPL_PK,TMPL_NAME,EXT_NAME,TMPL_DESC,
+		TMPL_TYPE,TMPL_LABEL,PUB_FILE_NAME,TMPL_FACE_PIC,TMPL_CONTENT,
+		IS_GLOBAL,OP_USER,OP_TIME,VERSION_NO,TMPL_CODE,SITE_PK,TMPL_HTML_PATH,TMPL_HTML_CONTENT,
+		TMPL_HTML_PATH2,TMPL_HTML_CONTENT2
+		FROM busi_template_def WHERE 1=1
+		<if test="TMPL_NAME != null">
+			and TMPL_NAME=#{TMPL_NAME}
+		</if>
+		<if test="TMPL_CODE != null">
+			and  TMPL_CODE=#{TMPL_CODE}
+		</if>
+		<if test="SITE_PK != null">
+			and  SITE_PK=#{SITE_PK}
+		</if>
+	</select>
+
+
+	<select id="queryBusiTemplateDefByTmplPk" resultType="hashmap" parameterType="hashmap">
+		select a.TMPL_PK,TMPL_NAME,EXT_NAME,TMPL_DESC,
+		TMPL_TYPE,TMPL_LABEL,PUB_FILE_NAME,TMPL_FACE_PIC,TMPL_CONTENT,
+		IS_GLOBAL,OP_USER,OP_TIME,VERSION_NO,a.TMPL_CODE,a.SITE_PK,
+		b.SITE_CODE,b.DOMAIN_URL
+		from busi_template_def a,busi_site_def b
+		where a.SITE_PK = b.SITE_PK
+		AND a.TMPL_PK = #{TMPL_PK}
+	</select>
+</mapper>
+

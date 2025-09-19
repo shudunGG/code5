@@ -1,0 +1,35 @@
+spring:
+    datasource:
+        driver-class-name: com.mysql.cj.jdbc.Driver
+        #driver-class-name: org.postgresql.Driver
+        #driver-class-name: oracle.jdbc.OracleDriver
+        #driver-class-name: com.microsoft.sqlserver.jdbc.SQLServerDriver
+        druid:
+            # MySql、PostgreSQL、SqlServer校验
+            validation-query: select 1
+            # Oracle校验
+            #validation-query: select 1 from dual
+
+#数据库配置
+blade:
+    datasource:
+        rocketmq:
+            dev:
+                # MySql
+                url: jdbc:mysql://60.168.132.72:13306/vs_base?useSSL=false&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&transformedBitIsBoolean=true&tinyInt1isBit=false&allowMultiQueries=true&serverTimezone=GMT%2B8&allowPublicKeyRetrieval=true
+                username: root
+                password: vingsoft
+
+#rocketmq配置
+mq:
+    producer:
+        #发送同一类消息的设置为同一个group，保证唯一,默认不需要设置，rocketmq会使用ip@pid(pid代表jvm名字)作为唯一标示
+        groupName: vs_Producer
+        #mq的nameserver地址
+        namesrvAddr: 192.168.0.120:9876
+        #消息最大长度 Maximum allowed message size in bytes. 4MB = 1024 * 1024 * 4
+        maxMessageSize: 4194304
+        #发送消息超时时间,默认3000
+        sendMsgTimeout: 3000
+        #发送消息失败重试次数，默认2
+        retryTimesWhenSendFailed: 2

@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" 
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="yuanMapper">
+
+
+	<select id="queryGfChatStandQuestion" resultType="hashmap" parameterType="hashmap">
+		select  ID,BASE,CLASS_1,CLASS_2,QUESTION,SEQ,REMARK,PROJECT,CLASS_1_ICON
+		from gf_chat_stand_question
+		where PROJECT=#{PROJECT}
+	</select>
+
+
+
+</mapper>
+

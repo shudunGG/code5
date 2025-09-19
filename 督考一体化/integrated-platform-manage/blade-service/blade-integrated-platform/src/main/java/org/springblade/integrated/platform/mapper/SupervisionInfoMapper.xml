@@ -1,0 +1,529 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.integrated.platform.mapper.SupervisionInfoMapper">
+  <resultMap id="BaseResultMap" type="com.vingsoft.entity.SupervisionInfo">
+    <id column="id" jdbcType="BIGINT" property="id" />
+    <result column="serv_code" jdbcType="VARCHAR" property="servCode" />
+    <result column="serv_name" jdbcType="VARCHAR" property="servName" />
+    <result column="serv_type_one" jdbcType="VARCHAR" property="servTypeOne" />
+    <result column="serv_type_two" jdbcType="VARCHAR" property="servTypeTwo" />
+    <result column="serv_type_three" jdbcType="VARCHAR" property="servTypeThree" />
+    <result column="serv_type_four" jdbcType="VARCHAR" property="servTypeFour" />
+    <result column="wcsx" jdbcType="DATE" property="wcsx" />
+    <result column="is_push_plan" jdbcType="VARCHAR" property="isPushPlan" />
+    <result column="serv_status" jdbcType="VARCHAR" property="servStatus" />
+    <result column="create_time" jdbcType="TIMESTAMP" property="createTime" />
+    <result column="create_user" jdbcType="VARCHAR" property="createUser" />
+    <result column="create_dept" jdbcType="VARCHAR" property="createDept" />
+    <result column="update_time" jdbcType="TIMESTAMP" property="updateTime" />
+    <result column="update_user" jdbcType="VARCHAR" property="updateUser" />
+    <result column="update_dept" jdbcType="VARCHAR" property="updateDept" />
+    <result column="requirement" jdbcType="LONGVARCHAR" property="requirement" />
+    <result column="duty_leader" jdbcType="LONGVARCHAR" property="dutyLeader" />
+    <result column="lead_unit" jdbcType="LONGVARCHAR" property="leadUnit" />
+    <result column="duty_unit" jdbcType="LONGVARCHAR" property="dutyUnit" />
+    <result column="supervisor" jdbcType="LONGVARCHAR" property="supervisor" />
+    <result column="evaluator" jdbcType="LONGVARCHAR" property="evaluator" />
+    <result column="flow_status" jdbcType="LONGVARCHAR" property="flowStatus" />
+    <result column="duty_leader_name" jdbcType="LONGVARCHAR" property="dutyLeaderName" />
+    <result column="lead_unit_name" jdbcType="LONGVARCHAR" property="leadUnitName" />
+    <result column="duty_unit_name" jdbcType="LONGVARCHAR" property="dutyUnitName" />
+    <result column="supervisor_name" jdbcType="LONGVARCHAR" property="supervisorName" />
+    <result column="supervisor_name" jdbcType="LONGVARCHAR" property="supervisorName" />
+    <result column="evaluator_name" jdbcType="LONGVARCHAR" property="evaluatorName" />
+      <collection property="supervisionSign" ofType="com.vingsoft.entity.SupervisionSign" columnPrefix="sign_">
+          <id column="id" jdbcType="BIGINT" property="id" />
+          <result column="sign_dept" jdbcType="VARCHAR" property="signDept" />
+          <result column="sign_Status" jdbcType="BIGINT" property="signStatus" />
+          <result column="sign_user" jdbcType="BIGINT" property="signUser" />
+          <result column="over_dept" jdbcType="BIGINT" property="overDept" />
+          <result column="over_status" jdbcType="BIGINT" property="overStatus" />
+          <result column="over_user" jdbcType="VARCHAR" property="overUser" />
+          <result column="dept_type" jdbcType="VARCHAR" property="deptType" />
+          <result column="serv_id" jdbcType="VARCHAR" property="servId" />
+      </collection>
+      <collection property="supervisionUpPlan" ofType="com.vingsoft.entity.SupervisionUpPlan" columnPrefix="upplan_">
+          <result column="serv_id" jdbcType="VARCHAR" property="servId" />
+          <result column="status" jdbcType="VARCHAR" property="status" />
+      </collection>
+      <collection property="supervisionPhaseReport" ofType="com.vingsoft.entity.SupervisionPhaseReport" columnPrefix="report_">
+          <result column="id" jdbcType="BIGINT" property="id" />
+          <result column="report_status" jdbcType="VARCHAR" property="reportStatus" />
+      </collection>
+      <collection property="supervisionPhasePlanList" ofType="com.vingsoft.entity.SupervisionPhasePlan" columnPrefix="plan_">
+          <result column="id" jdbcType="BIGINT" property="id" />
+          <result column="report_status" jdbcType="VARCHAR" property="reportStatus" />
+          <result column="phase_code" jdbcType="VARCHAR" property="phaseCode" />
+          <result column="phase_name" jdbcType="VARCHAR" property="phaseName" />
+          <result column="start_time" jdbcType="TIMESTAMP" property="startTime" />
+          <result column="end_time" jdbcType="TIMESTAMP" property="endTime" />
+      </collection>
+  </resultMap>
+    <resultMap id="servDeptPlanReportMap" type="com.vingsoft.vo.SupervisionDeptPlanReportVO">
+        <id column="id" jdbcType="BIGINT" property="id" />
+        <id column="dept_id" jdbcType="BIGINT" property="deptId" />
+        <id column="dept_name" jdbcType="BIGINT" property="deptName" />
+        <id column="dept_type" jdbcType="BIGINT" property="deptType" />
+        <id column="serv_code" jdbcType="BIGINT" property="servCode" />
+        <collection property="supervisionPhasePlanList" ofType="com.vingsoft.entity.SupervisionPhasePlan" columnPrefix="plan_">
+            <result column="id" jdbcType="BIGINT" property="id" />
+            <result column="report_status" jdbcType="VARCHAR" property="reportStatus" />
+            <result column="phase_code" jdbcType="VARCHAR" property="phaseCode" />
+            <result column="phase_name" jdbcType="VARCHAR" property="phaseName" />
+            <result column="start_time" jdbcType="TIMESTAMP" property="startTime" />
+            <result column="end_time" jdbcType="TIMESTAMP" property="endTime" />
+            <result column="phase_Status" jdbcType="VARCHAR" property="phaseStatus" />
+            <result column="requirement" jdbcType="VARCHAR" property="requirement" />
+            <collection property="supervisionPhaseReportList" ofType="com.vingsoft.entity.SupervisionPhaseReport" columnPrefix="report_">
+                <id column="id" jdbcType="BIGINT" property="id" />
+                <result column="serv_code" jdbcType="VARCHAR" property="servCode" />
+                <result column="phase_id" jdbcType="BIGINT" property="phaseId" />
+                <result column="phase_name" jdbcType="VARCHAR" property="phaseName" />
+                <result column="report_dept" jdbcType="VARCHAR" property="reportDept" />
+                <result column="report_dept_name" jdbcType="VARCHAR" property="reportDeptName" />
+                <result column="report_user" jdbcType="VARCHAR" property="reportUser" />
+                <result column="report_user_name" jdbcType="VARCHAR" property="reportUserName" />
+                <result column="progress_status" jdbcType="VARCHAR" property="progressStatus" />
+                <result column="report_time" jdbcType="TIMESTAMP" property="reportTime" />
+                <result column="situation" jdbcType="LONGVARCHAR" property="situation" />
+                <result column="unfinished_remark" jdbcType="LONGVARCHAR" property="unfinishedRemark" />
+                <result column="rectification_measures" jdbcType="LONGVARCHAR" property="rectificationMeasures" />
+                <result column="report_message" jdbcType="LONGVARCHAR" property="reportMessage" />
+                <result column="report_Status" jdbcType="LONGVARCHAR" property="reportStatus" />
+                <result column="down_User_Name" jdbcType="LONGVARCHAR" property="downUserName" />
+                <result column="down_User_Id" jdbcType="LONGVARCHAR" property="downUserId" />
+                <result column="down_Status" jdbcType="LONGVARCHAR" property="downStatus" />
+                <collection property="supervisionFilesList" ofType="com.vingsoft.entity.SupervisionFiles" columnPrefix="file_">
+                    <result column="file_name" jdbcType="VARCHAR" property="fileName" />
+                    <result column="file_from" jdbcType="VARCHAR" property="fileFrom" />
+                    <result column="file_Url" jdbcType="VARCHAR" property="fileUrl" />
+                </collection>
+            </collection>
+
+        </collection>
+        <collection property="supervisionEvaluate" ofType="com.vingsoft.entity.SupervisionEvaluate" columnPrefix="evaluate_">
+            <id column="id" jdbcType="BIGINT" property="id" />
+            <result column="serv_code" jdbcType="VARCHAR" property="servCode" />
+            <result column="evaluate_user" jdbcType="VARCHAR" property="evaluateUser" />
+            <result column="evaluate_user_name" jdbcType="VARCHAR" property="evaluateUserName" />
+            <result column="evaluated_dept" jdbcType="VARCHAR" property="evaluatedDept" />
+            <result column="evaluated_dept_name" jdbcType="VARCHAR" property="evaluatedDeptName" />
+            <result column="result" jdbcType="VARCHAR" property="result" />
+            <result column="evaluate_time" jdbcType="TIMESTAMP" property="evaluateTime" />
+            <result column="evaluate_Type" jdbcType="VARCHAR" property="evaluateType" />
+            <result column="remark" jdbcType="VARCHAR" property="remark" />
+        </collection>
+    </resultMap>
+
+    <select id="queryList" resultMap="BaseResultMap" >
+        select
+        info.*,
+        plan.id plan_id,
+        plan.phase_name plan_phase_name,
+        date_format(plan.start_time,'%Y-%m-%d %H:%i:%s') plan_start_time,
+        date_format(plan.end_time,'%Y-%m-%d %H:%i:%s') plan_end_time
+        from supervision_info  info
+        left join supervision_sign sign on sign.serv_id=info.id and sign.sign_Dept=#{deptId}
+        LEFT JOIN (select id,serv_id, status from supervision_up_plan where up_dept=#{deptId}  group by serv_id, status ) upPlan on info.id=upPlan.serv_id
+        LEFT JOIN (select count(*) num, serv_id from supervision_up_plan where status=1   group by serv_id ) upPlanOther on info.id=upPlanOther.serv_id
+        left join(
+        SELECT plan.id,plan.phase_name,plan.start_time,plan.end_time, plan.serv_code,plan.report_status planUpStatus,re.id reporId,re.report_status,re.down_User_Name,re.down_User_Id,re.down_Status,re.report_dept,
+        re.issue_Status,
+        re.parent_Id
+        from supervision_phase_plan plan
+        left JOIN supervision_phase_report re on plan.id=re.phase_id
+        where date_format( plan.start_time , '%Y-%m-%d %H:%i:%s' )<![CDATA[<=]]> date_format( now( ) , '%Y-%m-%d %H:%i:%s' )
+        and date_format( plan.end_time , '%Y-%m-%d %H:%i:%s' )>= date_format( now( ) , '%Y-%m-%d %H:%i:%s' )and  report_dept=#{deptId}
+        )plan on  plan.serv_code = info.serv_code
+        left JOIN supervision_submit_audit audit on audit.serv_id=info.id and audit.status='0' and user_id=#{userId}
+        left join (
+
+        SELECT COUNT(*),serv_id,user_id from supervision_submit_audit where operation_type in ('info','plan')  group by serv_id,user_id
+
+        ) auditShow on auditShow.serv_id = info.id and auditShow.user_id=#{userId}
+
+        LEFT JOIN ( select count(*) as num, user_id, report_id from supervision_submit_audit where  operation_type in('report','reportAll','reportChi','reportAlt') and status='0' group by user_id, report_id) auditHB on auditHB.report_id =info.id and auditHB.user_id=#{userId}
+        LEFT JOIN ( select count(*) as num, user_id, report_id from supervision_submit_audit where  operation_type ='plan' and status='0' group by user_id, report_id) auditJH on auditJH.report_id =info.id and auditJH.user_id=#{userId}
+        LEFT JOIN (SELECT COUNT(*) num,serv_code from supervision_evaluate where  is_deleted = 0 and evaluate_User=#{userId} GROUP by serv_code) eva on eva.serv_code=info.serv_code
+        LEFT JOIN (select COUNT(*) num,serv_id  from supervision_late where late_status=1 GROUP by serv_id) lateTJ on lateTJ.serv_id=info.id
+        left join (select count(*) num ,serv_code from supervision_phase_plan group by  serv_code ) planS on planS.serv_code=info.serv_code
+        left JOIN (SELECT COUNT(*) num ,serv_code from supervision_phase_report where (parent_id is null or parent_id='')
+        <if test="tbBus ==2 " >
+            and report_dept = #{deptId}
+        </if>
+        and report_status='6' GROUP by   serv_code )  report on report.serv_code=info.serv_code
+        left join supervision_phase_report_alt reportAlt on reportAlt.serv_code = info.serv_code
+        <where>
+            ${ew.sqlSegment}
+        </where>
+    </select>
+
+    <select id="queryListCB" resultType="com.vingsoft.vo.SupervisionInfoVO" >
+        select
+            info.*,
+            sign.sign_Status,
+            sign.dept_Type ,
+            sign.id signId,
+            plan.id planId,
+            upPlan.id upPlanId,
+            ifnull(upPlan.status,0) upPlanStatus,
+            upPlanOther.num upPlanOtherNum,
+            plan.planUpStatus planUpStatus,
+            plan.reporId,
+            plan.report_Status reportStatus,
+            plan.down_User_Name reportDownUserName,
+            plan.down_User_Id  reportDownUserId,
+            plan.down_Status reportDownStatus,
+            plan.issue_Status issueStatus,
+            plan.parent_Id parentId,
+            audit.id audit_id,
+            audit.operation_type,
+            audit.user_id auditUserId,
+            ifnull(auditHB.num,0) auditHb,
+            ifnull(eva.num,0) isEvaluate,
+            ifnull(auditJH.num, 0) auditJH,
+            lateTJ.num lateNum,
+            planS.num planNum,
+            case when ifnull(report.num,0)>0 then '1' else '0' end isOverdue
+        from supervision_info  info
+        left join supervision_sign sign on sign.serv_id=info.id and sign.sign_Dept=#{deptId}
+        LEFT JOIN (select id,serv_id, status from supervision_up_plan where up_dept=#{deptId}  group by serv_id, status ) upPlan on info.id=upPlan.serv_id
+        LEFT JOIN (select count(*) num, serv_id from supervision_up_plan where status=1   group by serv_id ) upPlanOther on info.id=upPlanOther.serv_id
+        left join(
+        SELECT plan.id, plan.serv_code,plan.report_status planUpStatus,re.id reporId,re.report_status,re.down_User_Name,re.down_User_Id,re.down_Status,re.report_dept,
+                re.issue_Status,
+                re.parent_Id
+               from supervision_phase_plan plan
+        left JOIN supervision_phase_report re on plan.id=re.phase_id
+        where date_format( plan.start_time , '%Y-%m-%d %H:%i:%s' )<![CDATA[<=]]> date_format( now( ) , '%Y-%m-%d %H:%i:%s' )
+        and date_format( plan.end_time , '%Y-%m-%d %H:%i:%s' )>= date_format( now( ) , '%Y-%m-%d %H:%i:%s' )and  report_dept=#{deptId}
+        )plan on  plan.serv_code = info.serv_code
+        left JOIN supervision_submit_audit audit on audit.serv_id=info.id and audit.status='0' and user_id=#{userId}
+        left join (
+
+        SELECT COUNT(*),serv_id,user_id from supervision_submit_audit where operation_type in ('info','plan')  group by serv_id,user_id
+
+        ) auditShow on auditShow.serv_id = info.id and auditShow.user_id=#{userId}
+
+        LEFT JOIN ( select count(*) as num, user_id, report_id from supervision_submit_audit where  operation_type in('report','reportAll','reportChi','reportAlt') and status='0' group by user_id, report_id) auditHB on auditHB.report_id =info.id and auditHB.user_id=#{userId}
+        LEFT JOIN ( select count(*) as num, user_id, report_id from supervision_submit_audit where  operation_type ='plan' and status='0' group by user_id, report_id) auditJH on auditJH.report_id =info.id and auditJH.user_id=#{userId}
+        LEFT JOIN (SELECT COUNT(*) num,serv_code from supervision_evaluate where  is_deleted = 0 and evaluate_User=#{userId} GROUP by serv_code) eva on eva.serv_code=info.serv_code
+        LEFT JOIN (select COUNT(*) num,serv_id  from supervision_late where late_status=1 GROUP by serv_id) lateTJ on lateTJ.serv_id=info.id
+        left join (select count(*) num ,serv_code from supervision_phase_plan group by  serv_code ) planS on planS.serv_code=info.serv_code
+        left JOIN (SELECT COUNT(*) num ,serv_code from supervision_phase_report where (parent_id is null or parent_id='')
+                                                                                <if test="tbBus ==2 " >
+                                                                                    and report_dept = #{deptId}
+                                                                                </if>
+                                                                                  and report_status='6' GROUP by   serv_code )  report on report.serv_code=info.serv_code
+        left join supervision_phase_report_alt reportAlt on reportAlt.serv_code = info.serv_code  and reportAlt.report_user=#{userId}
+        <where>
+            ${ew.sqlSegment}
+        </where>
+    </select>
+
+    <select id="queryListfollow" resultType="com.vingsoft.vo.SupervisionInfoVO" >
+        select
+        info.*,
+        sign.sign_Status,
+        sign.dept_Type ,
+        sign.id signId,
+        plan.id planId,
+        ifnull(upPlan.status,0) upPlanStatus,
+        plan.planUpStatus planUpStatus,
+        plan.reporId,
+        plan.report_Status reportStatus,
+        plan.down_User_Name reportDownUserName,
+        plan.down_User_Id  reportDownUserId,
+        plan.down_Status reportDownStatus,
+        follow.follow_user,
+        audit.id audit_id,
+        audit.operation_type,
+        audit.user_id auditUserId,
+        ifnull(auditHB.num,0) auditHb,
+        ifnull(eva.num,0) isEvaluate
+        from supervision_info  info
+        left join supervision_sign sign on sign.serv_id=info.id and sign.sign_Dept=#{deptId}
+        LEFT JOIN (SELECT serv_id,status from supervision_up_plan group by serv_id,status ) upPlan on info.id=upPlan.serv_id
+        left join(
+        SELECT plan.id, plan.serv_code,plan.report_status planUpStatus,re.id reporId,re.report_status,re.down_User_Name,re.down_User_Id,re.down_Status,re.report_dept from supervision_phase_plan plan
+        left JOIN supervision_phase_report re on plan.id=re.phase_id
+        where date_format( plan.start_time , '%Y-%m-%d %H:%i:%s' )<![CDATA[<=]]> date_format( now( ) , '%Y-%m-%d %H:%i:%s' )
+        and date_format( plan.end_time , '%Y-%m-%d %H:%i:%s' )>= date_format( now( ) , '%Y-%m-%d %H:%i:%s' )and  report_dept=#{deptId}
+        )plan on  plan.serv_code = info.serv_code
+        LEFT JOIN (
+        SELECT * from follow_information  where business_type = '1' and status='1' and is_deleted = 0
+        ) follow on follow.business_id =info.id
+        left JOIN supervision_submit_audit audit on audit.serv_id=info.id and audit.status='0' and user_id=#{userId}
+        left join (
+
+        SELECT COUNT(*),serv_id,user_id from supervision_submit_audit where operation_type in ('info','plan')  group by serv_id,user_id
+
+        ) auditShow on auditShow.serv_id = info.id and auditShow.user_id=#{userId}
+
+        LEFT JOIN ( select count(*) as num, user_id, report_id from supervision_submit_audit where operation_type in('report','reportAll','reportChi')  and status='0' group by user_id, report_id) auditHB on auditHB.report_id =info.id and auditHB.user_id=#{userId}
+        LEFT JOIN (SELECT COUNT(*) num,serv_code from supervision_evaluate where  is_deleted = 0 and evaluate_User=#{userId} GROUP by serv_code) eva on eva.serv_code=info.serv_code
+        <where>
+            ${ew.sqlSegment}
+        </where>
+    </select>
+
+    <select id="listStatistics" resultType="map">
+
+        SELECT count(*) as sy, ifnull(info1.ywc,0) ywc,ifnull(info2.tjz,0) tjz ,ifnull(info3.dhb,0) dhb ,ifnull(info4.ycq,0) ycq from  supervision_info info
+              left JOIN (SELECT COUNT(*) ywc from supervision_info where flow_status='4'
+                                                                    <if test="servTypeThree != null and servTypeThree!='' " >
+                                                                        and serv_Type_Three = #{servTypeThree}
+                                                                    </if>
+                                                                    <if test="deptId != null and deptId!='' " >
+                                                                        and create_dept = #{deptId}
+                                                                    </if>
+                                                                    <if test="year != null and year!='' " >
+                                                                        and cast(year(create_time) as char) = #{year}
+                                                                    </if>
+                  ) info1 on 1=1
+              LEFT JOIN (SELECT COUNT(*) tjz from supervision_info where flow_status in('1','2','3')  and  date_format(wcsx, '%Y-%m-%d %H:%i:%s') >= date_format(now(), '%Y-%m-%d %H:%i:%s')
+                                                                    <if test="servTypeThree != null and servTypeThree!='' " >
+                                                                        and serv_Type_Three = #{servTypeThree}
+                                                                    </if>
+                                                                    <if test="deptId != null and deptId!='' " >
+                                                                        and create_dept = #{deptId}
+                                                                    </if>
+                                                                    <if test="year != null and year!='' " >
+                                                                        and cast(year(create_time) as char) = #{year}
+                                                                    </if>
+                  ) info2 on 1=1
+              LEFT JOIN (SELECT COUNT(*) dhb from supervision_info i
+                        LEFT JOIN (SELECT COUNT(*) num,serv_code from supervision_phase_report where report_status='0'  group by serv_code ) s on s.serv_code=i.serv_code
+                                                                     where ifnull(s.num,'0')>0 and flow_status='3'
+                                                                    <if test="servTypeThree != null and servTypeThree!='' " >
+                                                                        and i.serv_Type_Three = #{servTypeThree}
+                                                                    </if>
+                                                                    <if test="deptId != null and deptId!='' " >
+                                                                        and i.create_dept = #{deptId}
+                                                                    </if>
+                                                                    <if test="year != null and year!='' " >
+                                                                        and cast(year(create_time) as char) = #{year}
+                                                                    </if>
+        )info3 on 1=1
+              LEFT JOIN (
+            SELECT COUNT(*) ycq from supervision_info where   date_format( wcsx , '%Y-%m-%d %H:%i:%s' )<![CDATA[<]]> date_format( now( ) , '%Y-%m-%d %H:%i:%s' ) and flow_Status!='4' and flow_Status!='0'
+                                                                        <if test="servTypeThree != null and servTypeThree!='' " >
+                                                                            and serv_Type_Three = #{servTypeThree}
+                                                                        </if>
+                                                                        <if test="deptId != null and deptId!='' " >
+                                                                            and create_dept = #{deptId}
+                                                                        </if>
+                                                                        <if test="year != null and year!='' " >
+                                                                            and cast(year(create_time) as char) = #{year}
+                                                                        </if>
+        )info4 on 1=1
+        <trim prefix="where" prefixOverrides="and|or" >
+        <if test="servTypeThree != null and servTypeThree!='' " >
+            and info.serv_Type_Three = #{servTypeThree}
+        </if>
+        <if test="deptId != null and deptId!='' " >
+            and create_dept = #{deptId}
+        </if>
+        <if test="year != null and year!='' " >
+            and cast(year(create_time) as char) = #{year}
+        </if>
+            and ifnull(flow_status,'0') not in('0','5')
+        </trim>
+    </select>
+    <select id="supervisionFollow" resultType="com.vingsoft.vo.SupervisionFollowVO">
+        SELECT
+               follow.follow_user,
+               follow.follow_user_id,
+               info.id servId,
+               info.serv_code,
+               info.serv_name,
+               info.create_time,
+               info.serv_Type_One,
+               info.serv_Type_Two
+               from follow_information follow
+         left JOIN supervision_info info on info.id=follow.business_id
+        <where>
+            ${ew.sqlSegment}
+        </where>
+    </select>
+    <select id="supervisionNoSign" resultType="com.vingsoft.entity.SupervisionSign" >
+        select sign.*
+        from supervision_sign sign
+        left join supervision_info info on  info.id=sign.serv_id
+        <where>
+            ${ew.sqlSegment}
+        </where>
+    </select>
+
+    <select id="supervisionNoReport" resultMap="BaseResultMap" >
+        select info.*,
+               plan.report_status plan_report_status,
+               plan.phase_code plan_phase_code,
+               plan.id plan_id,
+               plan.phase_name plan_phase_name
+        from supervision_phase_plan plan
+        left join supervision_info info on info.serv_code=plan.serv_code
+        <where>
+            ${ew.sqlSegment}
+        </where>
+    </select>
+
+    <select id="listStatisticsdhb" resultMap="BaseResultMap" >
+        SELECT i.* from supervision_info i
+        LEFT JOIN (SELECT COUNT(*) num,serv_code from supervision_phase_report where report_status='0'  group by serv_code ) s on s.serv_code=i.serv_code
+        <where>
+            ${ew.sqlSegment}
+        </where>
+    </select>
+
+    <select id="servDeptPlanReport" resultMap="servDeptPlanReportMap" >
+        SELECT
+        info.id,
+        info.serv_code,
+        sign.sign_dept dept_id,
+        sign.dept_type,
+        plan.id plan_id,
+        plan.phase_name plan_phase_name,
+        plan.phase_code plan_phase_code,
+        plan.start_time plan_start_time,
+        plan.end_time plan_end_time,
+        plan.phase_Status plan_phase_status,
+        plan.requirement plan_requirement,
+        pla.id plan_report_id,
+        pla.serv_code plan_report_serv_code,
+        pla.phase_id plan_report_phase_id,
+        pla.phase_name plan_report_phase_name,
+        pla.report_dept plan_report_report_dept,
+        pla.report_dept_name plan_report_report_dept_name,
+        pla.report_user plan_report_report_user,
+        pla.report_user_name plan_report_report_user_name,
+        pla.progress_status plan_report_progress_status,
+        pla.situation plan_report_situation,
+        pla.unfinished_remark plan_report_unfinished_remark,
+        pla.rectification_measures plan_report_rectification_measures,
+        pla.report_time plan_report_report_time,
+        pla.report_message plan_report_report_message,
+        pla.report_status plan_report_report_status,
+        pla.remind_report_time plan_report_remind_report_time,
+        pla.down_user_id plan_report_down_user_id,
+        pla.down_user_name plan_report_down_user_name,
+        pla.down_status plan_report_down_status,
+        pla.file_name plan_report_file_file_name,
+        pla.file_Url plan_report_file_file_Url,
+        pla.file_from plan_report_file_file_from,
+
+        eva.id evaluate_id,
+        eva.serv_code evaluate_serv_code,
+        eva.appraise_classify evaluate_appraise_classify,
+        eva.appraise_classify_name evaluate_appraise_classify_name,
+        eva.appraise_deptname evaluate_appraise_deptname,
+        eva.appraise_deptid evaluate_appraise_deptid,
+        eva.evaluate_user evaluate_evaluate_user,
+        eva.evaluate_user_name evaluate_evaluate_user_name,
+        eva.evaluated_dept evaluate_evaluated_dept,
+        eva.evaluated_dept_name evaluate_evaluated_dept_name,
+        eva.`result` `evaluate_result`,
+        eva.remark evaluate_remark,
+        eva.evaluate_type evaluate_evaluate_type,
+        eva.evaluate_time evaluate_evaluate_time
+
+        from supervision_sign sign
+        left JOIN supervision_info  info on info.id=sign.serv_id
+        LEFT JOIN supervision_phase_plan plan on plan.serv_code=info.serv_code
+        LEFT JOIN (
+        SELECT
+        report.id,
+        report.serv_code ,
+        report.phase_id,
+        report.phase_name,
+        report.report_dept ,
+        report.report_dept_name,
+        report.report_user ,
+        report.report_user_name,
+        report.progress_status ,
+        report.situation ,
+        report.unfinished_remark ,
+        report.rectification_measures,
+        report.report_time ,
+        report.report_message,
+        report.report_status ,
+        report.remind_report_time,
+        report.down_user_id,
+        report.down_user_name,
+        report.down_status ,
+        file.file_name,file.file_from,file.file_Url
+        from  supervision_phase_report report
+        LEFT JOIN supervision_files file on file.phase_id=report.phase_id and file.file_from='5'
+        ) pla on pla.serv_code=info.serv_code and CAST(sign.sign_dept AS CHAR)=pla.report_dept and pla.phase_id=plan.id
+        LEFT JOIN supervision_evaluate eva on eva.evaluated_dept=CAST(sign.sign_dept AS CHAR) and eva.serv_code=info.serv_code and eva.is_Deleted='0'  and eva.evaluate_Type=#{evaluateType}
+        <where>
+            ${ew.sqlSegment}
+        </where>
+    </select>
+
+    <select id="detailsNew" resultType="com.vingsoft.vo.SupervisionInfoVO" >
+        select
+        info.*,
+        sign.sign_Status,
+        sign.dept_Type ,
+        sign.id signId,
+        plan.id planId,
+        upPlan.id upPlanId,
+        ifnull(upPlan.status,0) upPlanStatus,
+        upPlanOther.num upPlanOtherNum,
+        plan.planUpStatus planUpStatus,
+        plan.reporId,
+        plan.report_Status reportStatus,
+        plan.down_User_Name reportDownUserName,
+        plan.down_User_Id  reportDownUserId,
+        plan.down_Status reportDownStatus,
+        plan.issue_Status issueStatus,
+        plan.parent_Id parentId,
+        follow.follow_user,
+        audit.id audit_id,
+        audit.operation_type,
+        audit.user_id auditUserId,
+        ifnull(auditHB.num,0) auditHb,
+        ifnull(eva.num,0) isEvaluate,
+        ifnull(auditJH.num,0) auditJH,
+        late.id lateId,
+        late_status lateStatus,
+        lateTJ.num lateNum,
+        planS.num planNum
+        from supervision_info  info
+        left join supervision_sign sign on sign.serv_id=info.id and sign.sign_Dept=#{deptId}
+        LEFT JOIN (select id,serv_id, status from supervision_up_plan where up_dept=#{deptId}   group by serv_id ) upPlan on info.id=upPlan.serv_id
+        LEFT JOIN (select count(*) num, serv_id from supervision_up_plan where status=1   group by serv_id ) upPlanOther on info.id=upPlanOther.serv_id
+        left join(
+        SELECT plan.id, plan.serv_code,plan.report_status planUpStatus,re.id reporId,re.report_status,re.down_User_Name,re.down_User_Id,re.down_Status,re.issue_Status,
+               re.parent_Id
+               from supervision_phase_plan plan
+        left JOIN supervision_phase_report re on plan.id=re.phase_id
+        where date_format( plan.start_time , '%Y-%m-%d %H:%i:%s' )<![CDATA[<=]]> date_format( now( ) , '%Y-%m-%d %H:%i:%s' )
+        and date_format( plan.end_time , '%Y-%m-%d %H:%i:%s' )>= date_format( now( ) , '%Y-%m-%d %H:%i:%s' )and  report_dept=#{deptId}
+        )plan on  plan.serv_code = info.serv_code
+        LEFT JOIN (
+        SELECT GROUP_CONCAT(distinct follow_user) follow_user ,business_id, business_type from follow_information  where business_type = '1' and status='1'  group by business_id
+        ) follow on follow.business_id =info.id
+        left JOIN supervision_submit_audit audit on audit.serv_id=info.id and audit.status='0' and user_id=#{userId}
+        LEFT JOIN ( select count(*) as num, user_id, report_id from supervision_submit_audit where operation_type in('report','reportAll','reportChi')   and status='0' group by user_id, report_id) auditHB on auditHB.report_id =info.id and auditHB.user_id=#{userId}
+        LEFT JOIN ( select count(*) as num, user_id, report_id from supervision_submit_audit where  operation_type ='plan' and status='0' group by user_id, report_id) auditJH on auditJH.report_id =info.id and auditJH.user_id=#{userId}
+        LEFT JOIN (SELECT COUNT(*) num,serv_code from supervision_evaluate where  is_deleted = 0 and evaluate_User=#{userId} GROUP by serv_code) eva on eva.serv_code=info.serv_code
+        LEFT JOIN  supervision_late  late on late.serv_id=info.id and late_status=1 and late_dept_id=#{deptId}
+        LEFT JOIN (select COUNT(*) num,serv_id  from supervision_late where late_status=1 GROUP by serv_id) lateTJ on lateTJ.serv_id=info.id
+        left join (select count(*) num ,serv_code from supervision_phase_plan group by  serv_code ) planS on planS.serv_code=info.serv_code
+        <where>
+            ${ew.sqlSegment}
+        </where>
+    </select>
+
+    <select id="selectplanid" resultType="com.vingsoft.vo.SupervisionInfoVO">
+        SELECT
+        plan.id planId,
+        plan.serv_code,
+        plan.report_status planUpStatus,re.id reporId,re.report_status reportStatus,re.down_User_Id reportDownUserId,re.down_Status reportDownStatus from supervision_phase_plan plan
+        left JOIN supervision_phase_report re on plan.id=re.phase_id
+        where   report_dept=#{deptId} and  plan.serv_code=#{servCode}
+        order by plan.end_time desc limit 1
+    </select>
+</mapper>

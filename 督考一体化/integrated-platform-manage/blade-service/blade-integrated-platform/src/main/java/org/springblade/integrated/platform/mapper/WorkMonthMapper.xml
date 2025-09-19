@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.integrated.platform.mapper.WorkMonthMapper">
+
+    <select id="workListPage" resultType="java.util.Map">
+        SELECT
+            a.*,
+            CASE
+                WHEN a.jhnum = 0
+                    OR a.num = 0 THEN
+                    0 ELSE ( a.jhnum / a.num ) * 100
+                END jhwcl
+        FROM
+            (
+                SELECT
+                    w.dept_name deptName,
+                    w.dept_code deptCode,
+                    max( w.create_time ) createTime,
+                    w.completion,
+                    w.month,
+                    wa.appraise_score appraiseScore,
+                    ifnull(sum(CASE WHEN w.completion = '1' THEN 1 ELSE 0 END ), 0) jhnum,
+                    ifnull(sum(1), 0) num
+                FROM
+                    work_month w left join work_month_appraise wa on wa.work_month_id=w.id
+                WHERE
+                    1 = 1
+                  AND w.month = #{month}
+
+                GROUP BY
+                    w.dept_code
+            ) a
+    </select>
+
+
+    <select id="selectTime" resultType="java.util.Map">
+        select create_time createTime from work_month where 1=1 and jhqk=#{jhqk} and month=#{month} and dept_code=#{deptCode} order by create_time desc limit 1
+    </select>
+
+
+    <select id="detail" resultType="com.vingsoft.entity.WorkMonth">
+        select * from work_month
+        where 1 = 1  and month = #{month}
+          and dept_code = #{deptCode}
+        order by create_time desc, sort asc
+    </select>
+
+    <select id="exportWorkMonth" resultType="org.springblade.integrated.platform.excel.WorkMonthExcel">
+        <!-- 如有需要可以加上条件 where id= #{qw.id} -->
+        select
+        concent,
+        person_liable,
+        plan_time,
+        (case completion when '1' then '已完成' when '2' then '未完成' end) as completion,
+        remarks
+        from work_month where is_deleted=0
+    </select>
+
+</mapper>

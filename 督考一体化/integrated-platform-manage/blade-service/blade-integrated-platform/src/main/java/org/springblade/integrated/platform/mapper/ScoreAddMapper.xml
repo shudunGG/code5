@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.springblade.integrated.platform.mapper.ScoreAddMapper">
+
+    <!--<select id="tree" resultMap="treeNodeResultMap">
+        select id, parent_id, dict_value as title, id as "value", id as "key" from blade_dict_biz where is_deleted = 0
+    </select>-->
+
+
+<select id="exportScoreAdd" resultType="org.springblade.integrated.platform.excel.ScoreAddExcel">
+    <!-- 如有需要可以加上条件 where id= #{qw.id} -->
+    select dept_name,check_way ,win_project ,win_level,score from score_add where is_deleted=0
+</select>
+
+    <update id="updateScoreAddIsSend" parameterType="string">
+        update score_add set is_send = '1' where is_deleted = '0' and isok = '1' and is_deleted = '0' and date_format(create_time,'%Y')=#{year}
+    </update>
+</mapper>
