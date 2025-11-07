@@ -1,0 +1,35 @@
+syntax = "proto3";
+package audit.v1;
+
+option go_package = "stablecoin-audit/proto/gen/go/audit/v1";
+
+message Project {
+  uint64 id = 1;
+  string name = 2;
+  string symbol = 3;
+  uint32 decimals = 4;
+  map<string, string> chains = 5;
+}
+
+message RegisterProjectRequest {
+  string name = 1;
+  string symbol = 2;
+  uint32 decimals = 3;
+  map<string, string> chains = 4;
+}
+
+message RegisterProjectResponse { Project project = 1; }
+
+message GetBaselineRequest { uint64 project_id = 1; }
+message Finding { string code = 1; string title = 2; string severity = 3; string detail = 4; }
+message BaselineReport {
+  string owner_type = 1;
+  uint32 risk_score = 2;
+  repeated Finding findings = 3;
+}
+message GetBaselineResponse { BaselineReport report = 1; }
+
+service ProjectService {
+  rpc RegisterProject(RegisterProjectRequest) returns (RegisterProjectResponse);
+  rpc GetBaseline(GetBaselineRequest) returns (GetBaselineResponse);
+}
