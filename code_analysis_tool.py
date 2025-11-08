@@ -19,7 +19,8 @@ import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Dict, Iterable, Iterator, List, Optional, Sequence, Tuple
+from typing import Dict, Iterable, Iterator, List, Optional, Sequence, Set, Tuple
+from urllib.parse import urlparse
 
 
 # ---------------------------------------------------------------------------
@@ -799,6 +800,78 @@ class ComplianceAnalyzer:
 # Metrics & IFPUG estimation
 
 
+def _line_number_from_index(text: str, index: int) -> int:
+    return text.count("\n", 0, index) + 1
+
+
+def _normalize_identifier(name: str) -> str:
+    return name.strip().strip("`\"')")
+
+
+def _trim_preview(lines: List[str], max_lines: int = 6) -> str:
+    preview = lines[:max_lines]
+    return "\n".join(line.rstrip() for line in preview if line.strip())
+
+
+def _unique_ordered(items: Iterable[str]) -> List[str]:
+    seen: Set[str] = set()
+    ordered: List[str] = []
+    for item in items:
+        candidate = item.strip()
+        if not candidate:
+            continue
+        key = candidate.lower()
+        if key in seen:
+            continue
+        seen.add(key)
+        ordered.append(candidate)
+    return ordered
+
+
+@dataclass
+class ElementDetail:
+    name: str
+    line: int
+    code: str = ""
+
+
+@dataclass
+class ReferenceDetail:
+    name: str
+    kind: str
+    file: Path
+    line: int
+    source: str = ""
+
+
+@dataclass
+class LogicalFileDetail:
+    name: str
+    kind: str  # ILF or EIF
+    file: Path
+    line: int
+    dets: List[str] = field(default_factory=list)
+    rets: List[str] = field(default_factory=list)
+    det_elements: List[ElementDetail] = field(default_factory=list)
+    ret_elements: List[ElementDetail] = field(default_factory=list)
+    source: str = ""
+    code_preview: str = ""
+    reference_tokens: List[str] = field(default_factory=list)
+
+
+@dataclass
+class TransactionDetail:
+    name: str
+    kind: str  # EI, EO, EQ
+    file: Path
+    line: int
+    dets: List[str] = field(default_factory=list)
+    det_elements: List[ElementDetail] = field(default_factory=list)
+    ftrs: List[str] = field(default_factory=list)
+    ftr_details: List[ReferenceDetail] = field(default_factory=list)
+    code_body: str = ""
+
+
 @dataclass
 class FileMetrics:
     path: Path
@@ -812,14 +885,43 @@ class FileMetrics:
     query_functions: int = 0
     input_functions: int = 0
     output_functions: int = 0
+    logical_files: List[LogicalFileDetail] = field(default_factory=list)
+    transaction_functions: List[TransactionDetail] = field(default_factory=list)
 
 
 class MetricsCollector:
     FUNCTION_KEYWORDS = {
-        "input": ("create", "add", "insert", "update", "delete", "save", "post"),
-        "output": ("get", "list", "export", "download", "report", "read"),
-        "query": ("find", "search", "query", "filter", "check"),
+        "input": ("create", "add", "insert", "update", "delete", "save", "post", "upload", "submit"),
+        "output": ("get", "list", "export", "download", "report", "read", "render", "stream"),
+        "query": ("find", "search", "query", "filter", "check", "lookup", "inspect"),
     }
+    IGNORED_DET_NAMES = {
+        "self",
+        "cls",
+        "request",
+        "response",
+        "kwargs",
+        "args",
+        "context",
+        "ctx",
+        "req",
+        "res",
+        "next",
+        "event",
+        "payload",
+        "data",
+        "body",
+        "info",
+    }
+    SQL_IGNORED_PREFIXES = (
+        "PRIMARY KEY",
+        "FOREIGN KEY",
+        "UNIQUE",
+        "KEY ",
+        "CONSTRAINT",
+        "INDEX",
+        "CHECK",
+    )
 
     def collect(self, root: Path) -> List[FileMetrics]:
         metrics: List[FileMetrics] = []
@@ -830,12 +932,30 @@ class MetricsCollector:
                 continue
             fm = FileMetrics(path=path)
             fm.lines_of_code = self._count_loc(text)
-            fm.function_defs = self._count_function_defs(path, text, fm)
             fm.class_defs = len(re.findall(r"^\s*(class|interface|struct)\s+\w+", text, re.MULTILINE))
             self._count_http_endpoints(text, fm)
             fm.db_entities = self._count_db_entities(text)
             fm.db_operations = self._count_db_operations(text)
             fm.external_calls = self._count_external_calls(text)
+
+            logical_files: List[LogicalFileDetail] = []
+            logical_files.extend(self._extract_sql_tables(path, text))
+            logical_files.extend(self._extract_entity_classes(path, text))
+            logical_files.extend(self._extract_django_models(path, text))
+            fm.logical_files.extend(logical_files)
+            fm.logical_files.extend(self._extract_external_endpoints(path, text))
+
+            functions = self._extract_function_details(path, text)
+            fm.function_defs = len(functions)
+            for func in functions:
+                if func.kind == "EI":
+                    fm.input_functions += 1
+                elif func.kind == "EO":
+                    fm.output_functions += 1
+                elif func.kind == "EQ":
+                    fm.query_functions += 1
+            fm.transaction_functions.extend(functions)
+
             metrics.append(fm)
         return metrics
 
@@ -843,31 +963,492 @@ class MetricsCollector:
     def _count_loc(text: str) -> int:
         return sum(1 for line in text.splitlines() if line.strip())
 
-    def _count_function_defs(self, path: Path, text: str, fm: FileMetrics) -> int:
+    def _extract_function_details(self, path: Path, text: str) -> List[TransactionDetail]:
         extension = path.suffix.lower()
-        names: List[str] = []
+        details: List[TransactionDetail] = []
         if extension == ".py":
-            names.extend(re.findall(r"^\s*def\s+(\w+)", text, re.MULTILINE))
-        elif extension in {".js", ".ts", ".tsx", ".jsx"}:
-            names.extend(re.findall(r"function\s+(\w+)", text))
-            names.extend(re.findall(r"const\s+(\w+)\s*=\s*\([^)]*\)\s*=>", text))
-        elif extension in {".java", ".kt", ".scala", ".go", ".cs"}:
-            names.extend(re.findall(r"\b(?:public|private|protected|static|final|synchronized|async|def|fun|void|int|String|boolean|double|float|List|Map|Set|var|val)+\s+\w+\s+(\w+)\s*\(", text))
-        elif extension == ".php":
-            names.extend(re.findall(r"function\s+(\w+)\s*\(", text))
-        elif extension == ".rb":
-            names.extend(re.findall(r"^\s*def\s+(\w+)", text, re.MULTILINE))
+            details.extend(self._extract_python_functions(path, text))
+        if extension in {".js", ".ts", ".tsx", ".jsx"}:
+            details.extend(self._extract_js_functions(path, text))
+        if extension in {".java", ".kt", ".scala", ".go", ".cs", ".php", ".swift"}:
+            details.extend(self._extract_c_like_functions(path, text))
+        return details
 
-        for name in names:
-            lowered = name.lower()
-            if any(keyword in lowered for keyword in self.FUNCTION_KEYWORDS["input"]):
-                fm.input_functions += 1
-            elif any(keyword in lowered for keyword in self.FUNCTION_KEYWORDS["output"]):
-                fm.output_functions += 1
-            elif any(keyword in lowered for keyword in self.FUNCTION_KEYWORDS["query"]):
-                fm.query_functions += 1
+    def _extract_python_functions(self, path: Path, text: str) -> List[TransactionDetail]:
+        details: List[TransactionDetail] = []
+        lines = text.splitlines()
+        pattern = re.compile(r"^(?P<indent>\s*)def\s+(?P<name>\w+)\s*\((?P<params>[^)]*)\):", re.MULTILINE)
+        for match in pattern.finditer(text):
+            name = match.group("name")
+            kind = self._classify_transaction(name)
+            if not kind:
+                continue
+            line_no = _line_number_from_index(text, match.start())
+            indent = len(match.group("indent"))
+            body_entries = self._collect_indented_block(lines, line_no, indent)
+            body_text = "\n".join(entry[1] for entry in body_entries)
+            params = self._split_parameters(match.group("params"))
+            signature_code = lines[line_no - 1].strip() if 0 <= line_no - 1 < len(lines) else ""
+            det_elements = self._derive_det_elements(
+                params,
+                signature_line=line_no,
+                signature_code=signature_code,
+                body_entries=body_entries,
+            )
+            details.append(
+                TransactionDetail(
+                    name=name,
+                    kind=kind,
+                    file=path,
+                    line=line_no,
+                    dets=[element.name for element in det_elements],
+                    det_elements=det_elements,
+                    code_body=body_text,
+                )
+            )
+        return details
 
-        return len(names)
+    def _extract_js_functions(self, path: Path, text: str) -> List[TransactionDetail]:
+        details: List[TransactionDetail] = []
+        lines = text.splitlines()
+        patterns = [
+            re.compile(r"(?:async\s+)?function\s+(?P<name>\w+)\s*\((?P<params>[^)]*)\)\s*\{", re.MULTILINE),
+            re.compile(r"(?:const|let|var)\s+(?P<name>\w+)\s*=\s*(?:async\s+)?\((?P<params>[^)]*)\)\s*=>\s*\{", re.MULTILINE),
+        ]
+        for pattern in patterns:
+            for match in pattern.finditer(text):
+                name = match.group("name")
+                kind = self._classify_transaction(name)
+                if not kind:
+                    continue
+                brace_index = text.find("{", match.end() - 1)
+                if brace_index == -1:
+                    continue
+                body_text, _ = self._extract_brace_block(text, brace_index)
+                line_no = _line_number_from_index(text, match.start())
+                params = self._split_parameters(match.group("params"))
+                signature_code = lines[line_no - 1].strip() if 0 <= line_no - 1 < len(lines) else ""
+                body_entries = self._collect_block_from_text(text, brace_index)
+                det_elements = self._derive_det_elements(
+                    params,
+                    signature_line=line_no,
+                    signature_code=signature_code,
+                    body_entries=body_entries,
+                )
+                details.append(
+                    TransactionDetail(
+                        name=name,
+                        kind=kind,
+                        file=path,
+                        line=line_no,
+                        dets=[element.name for element in det_elements],
+                        det_elements=det_elements,
+                        code_body=body_text,
+                    )
+                )
+        return details
+
+    def _extract_c_like_functions(self, path: Path, text: str) -> List[TransactionDetail]:
+        details: List[TransactionDetail] = []
+        lines = text.splitlines()
+        pattern = re.compile(
+            r"(?P<signature>\b(?:public|protected|private|internal|static|final|synchronized|async|override|virtual|abstract|suspend|inline|constexpr|template<[^>]+>\s+|[\w\[\]<>]+?\s+)+)"
+            r"(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*\((?P<params>[^)]*)\)\s*\{",
+            re.MULTILINE,
+        )
+        for match in pattern.finditer(text):
+            name = match.group("name")
+            kind = self._classify_transaction(name)
+            if not kind:
+                continue
+            brace_index = text.find("{", match.end() - 1)
+            if brace_index == -1:
+                continue
+            body_text, _ = self._extract_brace_block(text, brace_index)
+            line_no = _line_number_from_index(text, match.start())
+            params = self._split_parameters(match.group("params"))
+            signature_code = lines[line_no - 1].strip() if 0 <= line_no - 1 < len(lines) else ""
+            body_entries = self._collect_block_from_text(text, brace_index)
+            det_elements = self._derive_det_elements(
+                params,
+                signature_line=line_no,
+                signature_code=signature_code,
+                body_entries=body_entries,
+            )
+            details.append(
+                TransactionDetail(
+                    name=name,
+                    kind=kind,
+                    file=path,
+                    line=line_no,
+                    dets=[element.name for element in det_elements],
+                    det_elements=det_elements,
+                    code_body=body_text,
+                )
+            )
+        return details
+
+    def _classify_transaction(self, name: str) -> Optional[str]:
+        lowered = name.lower()
+        if any(keyword in lowered for keyword in self.FUNCTION_KEYWORDS["input"]):
+            return "EI"
+        if any(keyword in lowered for keyword in self.FUNCTION_KEYWORDS["output"]):
+            return "EO"
+        if any(keyword in lowered for keyword in self.FUNCTION_KEYWORDS["query"]):
+            return "EQ"
+        return None
+
+    def _split_parameters(self, raw: str) -> List[str]:
+        if not raw:
+            return []
+        params: List[str] = []
+        for part in raw.split(","):
+            token = part.strip()
+            if not token:
+                continue
+            token = token.split("=")[0].strip()
+            if ":" in token:
+                token = token.split(":")[0].strip()
+            token = token.lstrip("*&")
+            params.append(token)
+        return params
+
+    def _derive_det_elements(
+        self,
+        parameters: List[str],
+        signature_line: int,
+        signature_code: str,
+        body_entries: List[Tuple[int, str]],
+    ) -> List[ElementDetail]:
+        seen: Set[str] = set()
+
+        def _should_include(name: str) -> bool:
+            return bool(name) and name not in self.IGNORED_DET_NAMES
+
+        def _key(name: str) -> str:
+            return name.lower()
+
+        dets: List[ElementDetail] = []
+        for param in parameters:
+            if _should_include(param):
+                key = _key(param)
+                if key not in seen:
+                    seen.add(key)
+                    dets.append(ElementDetail(name=param, line=signature_line, code=signature_code))
+
+        string_key_pattern = re.compile(r"[\"']([A-Za-z0-9_]+)[\"']\s*:")
+        getter_pattern = re.compile(r"\.get\(['\"]([A-Za-z0-9_]+)['\"]\)")
+        assignment_pattern = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*)\s*=")
+
+        for line_no, line_text in body_entries:
+            for regex in (string_key_pattern, getter_pattern, assignment_pattern):
+                for match in regex.finditer(line_text):
+                    name = match.group(1)
+                    if not _should_include(name):
+                        continue
+                    key = _key(name)
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                    dets.append(ElementDetail(name=name, line=line_no, code=line_text.strip()))
+        return dets
+
+    @staticmethod
+    def _collect_indented_block(lines: List[str], start_line: int, base_indent: int) -> List[Tuple[int, str]]:
+        block: List[Tuple[int, str]] = []
+        for idx in range(start_line, len(lines)):
+            line = lines[idx]
+            if not line.strip():
+                block.append((idx + 1, line))
+                continue
+            indent = len(line) - len(line.lstrip())
+            if indent <= base_indent:
+                break
+            block.append((idx + 1, line))
+        return block
+
+    @staticmethod
+    def _collect_block_from_text(text: str, brace_index: int) -> List[Tuple[int, str]]:
+        body_text, _ = MetricsCollector._extract_brace_block(text, brace_index)
+        start_line = _line_number_from_index(text, brace_index)
+        entries: List[Tuple[int, str]] = []
+        for offset, raw_line in enumerate(body_text.splitlines()):
+            entries.append((start_line + offset, raw_line))
+        return entries
+
+    @staticmethod
+    def _extract_brace_block(text: str, brace_start: int) -> Tuple[str, int]:
+        depth = 0
+        start_content = brace_start + 1
+        i = brace_start
+        while i < len(text):
+            char = text[i]
+            if char == "{":
+                depth += 1
+                if depth == 1:
+                    start_content = i + 1
+            elif char == "}":
+                depth -= 1
+                if depth == 0:
+                    return text[start_content:i], i + 1
+            i += 1
+        return text[start_content:], len(text)
+
+    @staticmethod
+    def _extract_parenthesis_block(text: str, paren_start: int) -> Tuple[str, int]:
+        depth = 0
+        start_content = paren_start + 1
+        i = paren_start
+        while i < len(text):
+            char = text[i]
+            if char == "(":
+                depth += 1
+                if depth == 1:
+                    start_content = i + 1
+            elif char == ")":
+                depth -= 1
+                if depth == 0:
+                    return text[start_content:i], i + 1
+            i += 1
+        return text[start_content:], len(text)
+
+    def _extract_sql_tables(self, path: Path, text: str) -> List[LogicalFileDetail]:
+        details: List[LogicalFileDetail] = []
+        lines = text.splitlines()
+        pattern = re.compile(r"CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?[`\"\[]?(?P<name>[A-Za-z0-9_]+)[`\"\]]?", re.IGNORECASE)
+        for match in pattern.finditer(text):
+            paren_index = text.find("(", match.end())
+            if paren_index == -1:
+                continue
+            body, end_index = self._extract_parenthesis_block(text, paren_index)
+            table_name = _normalize_identifier(match.group("name"))
+            column_start_line = _line_number_from_index(text, paren_index)
+            det_elements = self._parse_columns_from_sql(body, column_start_line)
+            dets = [element.name for element in det_elements]
+            line_no = _line_number_from_index(text, match.start())
+            preview = _trim_preview(text[match.start():end_index].splitlines())
+            reference = _unique_ordered([table_name] + dets)
+            ret_element = (
+                ElementDetail(name=table_name, line=line_no, code=lines[line_no - 1].strip())
+                if table_name and 0 <= line_no - 1 < len(lines)
+                else None
+            )
+            details.append(
+                LogicalFileDetail(
+                    name=table_name,
+                    kind="ILF",
+                    file=path,
+                    line=line_no,
+                    dets=dets,
+                    rets=[table_name] if table_name else [],
+                    det_elements=det_elements,
+                    ret_elements=[ret_element] if ret_element else [],
+                    source="sql create table",
+                    code_preview=preview,
+                    reference_tokens=reference,
+                )
+            )
+        return details
+
+    def _parse_columns_from_sql(self, body: str, start_line: int) -> List[ElementDetail]:
+        dets: List[ElementDetail] = []
+        seen: Set[str] = set()
+        for offset, raw_line in enumerate(body.splitlines()):
+            line = raw_line.strip().rstrip(",")
+            if not line:
+                continue
+            upper = line.upper()
+            if any(upper.startswith(prefix) for prefix in self.SQL_IGNORED_PREFIXES):
+                continue
+            match = re.match(r"[`\"\[]?([A-Za-z0-9_]+)[`\"\]]?\s+", line)
+            if match:
+                name = _normalize_identifier(match.group(1))
+                key = name.lower()
+                if key in seen:
+                    continue
+                seen.add(key)
+                dets.append(
+                    ElementDetail(
+                        name=name,
+                        line=start_line + offset,
+                        code=raw_line.strip(),
+                    )
+                )
+        return dets
+
+    def _extract_entity_classes(self, path: Path, text: str) -> List[LogicalFileDetail]:
+        details: List[LogicalFileDetail] = []
+        pattern = re.compile(r"@Entity[^\n]*\n(?:\s*@\w+[^\n]*\n)*\s*(?:public|protected|private)?\s*class\s+(?P<name>\w+)\s*\{", re.MULTILINE)
+        lines = text.splitlines()
+        field_patterns = (
+            re.compile(r"(?:private|protected|public)\s+[A-Za-z0-9_<>,\[\]]+\s+([A-Za-z0-9_]+)\s*(?:=|;)"),
+            re.compile(r"\b(?:var|val)\s+([A-Za-z0-9_]+)\s*[:=]"),
+        )
+        for match in pattern.finditer(text):
+            brace_index = text.find("{", match.end() - 1)
+            if brace_index == -1:
+                continue
+            body_text, end_index = self._extract_brace_block(text, brace_index)
+            body_entries = self._collect_block_from_text(text, brace_index)
+            field_elements: List[ElementDetail] = []
+            seen: Set[str] = set()
+            for line_no, line_text in body_entries:
+                for regex in field_patterns:
+                    match_field = regex.search(line_text)
+                    if match_field:
+                        name = match_field.group(1)
+                        key = name.lower()
+                        if key in seen or name in self.IGNORED_DET_NAMES:
+                            continue
+                        seen.add(key)
+                        field_elements.append(
+                            ElementDetail(
+                                name=name,
+                                line=line_no,
+                                code=line_text.strip(),
+                            )
+                        )
+                        break
+            dets = [element.name for element in field_elements]
+            line_no = _line_number_from_index(text, match.start())
+            preview = _trim_preview(text[match.start():end_index].splitlines())
+            class_name = match.group("name")
+            ret_element = ElementDetail(
+                name=class_name,
+                line=line_no,
+                code=lines[line_no - 1].strip() if 0 <= line_no - 1 < len(lines) else "",
+            )
+            details.append(
+                LogicalFileDetail(
+                    name=class_name,
+                    kind="ILF",
+                    file=path,
+                    line=line_no,
+                    dets=dets,
+                    rets=[class_name],
+                    det_elements=field_elements,
+                    ret_elements=[ret_element],
+                    source="entity class",
+                    code_preview=preview,
+                    reference_tokens=_unique_ordered([class_name] + dets),
+                )
+            )
+        return details
+
+    def _extract_django_models(self, path: Path, text: str) -> List[LogicalFileDetail]:
+        details: List[LogicalFileDetail] = []
+        lines = text.splitlines()
+        pattern = re.compile(r"^class\s+(?P<name>\w+)\((?:models\.Model|BaseModel)\):", re.MULTILINE)
+        for match in pattern.finditer(text):
+            class_name = match.group("name")
+            line_no = _line_number_from_index(text, match.start())
+            line_index = max(line_no - 1, 0)
+            base_line = lines[line_index] if line_index < len(lines) else ""
+            indent = len(base_line) - len(base_line.lstrip())
+            body_entries = self._collect_indented_block(lines, line_no, indent)
+            det_elements: List[ElementDetail] = []
+            seen: Set[str] = set()
+            for entry_line_no, line in body_entries:
+                field_match = re.match(r"\s*([A-Za-z0-9_]+)\s*=\s*models\.", line)
+                if field_match:
+                    name = field_match.group(1)
+                    key = name.lower()
+                    if key in seen or name in self.IGNORED_DET_NAMES:
+                        continue
+                    seen.add(key)
+                    det_elements.append(
+                        ElementDetail(
+                            name=name,
+                            line=entry_line_no,
+                            code=line.strip(),
+                        )
+                    )
+            dets = [element.name for element in det_elements]
+            preview = _trim_preview(([base_line] if base_line else []) + [entry[1] for entry in body_entries])
+            details.append(
+                LogicalFileDetail(
+                    name=class_name,
+                    kind="ILF",
+                    file=path,
+                    line=line_no,
+                    dets=_unique_ordered(dets),
+                    rets=[class_name],
+                    det_elements=det_elements,
+                    ret_elements=[ElementDetail(name=class_name, line=line_no, code=base_line.strip())] if base_line else [
+                        ElementDetail(name=class_name, line=line_no, code="")
+                    ],
+                    source="django model",
+                    code_preview=preview,
+                    reference_tokens=_unique_ordered([class_name] + dets),
+                )
+            )
+        return details
+
+    def _extract_external_endpoints(self, path: Path, text: str) -> List[LogicalFileDetail]:
+        details: List[LogicalFileDetail] = []
+        patterns = [
+            ("requests", re.compile(r"requests\.(get|post|put|delete|patch)\s*\(\s*(?P<quote>['\"])(?P<url>[^'\"\)]+)(?P=quote)", re.IGNORECASE), lambda m: m.group(1)),
+            ("httpx", re.compile(r"httpx\.(get|post|put|delete|patch)\s*\(\s*(?P<quote>['\"])(?P<url>[^'\"\)]+)(?P=quote)", re.IGNORECASE), lambda m: m.group(1)),
+            ("axios", re.compile(r"axios\.(get|post|put|delete|patch)\s*\(\s*(?P<quote>['\"])(?P<url>[^'\"\)]+)(?P=quote)", re.IGNORECASE), lambda m: m.group(1)),
+            ("fetch", re.compile(r"fetch\s*\(\s*(?P<quote>['\"])(?P<url>[^'\"\)]+)(?P=quote)", re.IGNORECASE), lambda _: "get"),
+            ("RestTemplate", re.compile(r"RestTemplate\.(getForObject|getForEntity|postForObject|exchange)\s*\(\s*(?P<quote>['\"])(?P<url>[^'\"\)]+)(?P=quote)", re.IGNORECASE), lambda m: m.group(1)),
+            ("WebClient", re.compile(r"WebClient\.(get|post|put|delete|patch)\(\)\s*\.uri\(\s*(?P<quote>['\"])(?P<url>[^'\"\)]+)(?P=quote)", re.IGNORECASE), lambda m: m.group(1)),
+        ]
+        for provider, pattern, method_getter in patterns:
+            for match in pattern.finditer(text):
+                url = match.group("url")
+                method_name = method_getter(match)
+                parsed = urlparse(url if "://" in url else f"http://{url}")
+                host = parsed.netloc
+                path_part = parsed.path or "/"
+                display_target = f"{host}{path_part}" if host else path_part
+                name = f"{method_name.upper()} {display_target}"
+                line_no = _line_number_from_index(text, match.start())
+                segment = text[match.start() : match.start() + 200]
+                body_entries = []
+                segment_lines = segment.splitlines()
+                for offset, seg_line in enumerate(segment_lines):
+                    body_entries.append((line_no + offset, seg_line))
+                det_elements = self._derive_det_elements(
+                    [],
+                    signature_line=line_no,
+                    signature_code=segment_lines[0].strip() if segment_lines else "",
+                    body_entries=body_entries,
+                )
+                dets = [element.name for element in det_elements]
+                if parsed.query:
+                    for part in parsed.query.split("&"):
+                        key = part.split("=")[0]
+                        if key and key not in self.IGNORED_DET_NAMES:
+                            det_elements.append(
+                                ElementDetail(
+                                    name=key,
+                                    line=line_no,
+                                    code=f"queryparam:{key}",
+                                )
+                            )
+                            dets.append(key)
+                preview = _trim_preview(segment.splitlines())
+                reference = _unique_ordered([host, path_part, path_part.split("/")[-1], url])
+                ret_elements = [
+                    ElementDetail(name=host or path_part, line=line_no, code=segment_lines[0].strip() if segment_lines else "")
+                ] if (host or path_part) else []
+                details.append(
+                    LogicalFileDetail(
+                        name=name,
+                        kind="EIF",
+                        file=path,
+                        line=line_no,
+                        dets=_unique_ordered(dets),
+                        rets=_unique_ordered([host or path_part, path_part]),
+                        det_elements=det_elements,
+                        ret_elements=ret_elements,
+                        source=f"external call via {provider}",
+                        code_preview=preview,
+                        reference_tokens=[token for token in reference if token],
+                    )
+                )
+        return details
 
     @staticmethod
     def _count_http_endpoints(text: str, fm: FileMetrics) -> None:
@@ -880,8 +1461,7 @@ class MetricsCollector:
         }
         for method, regexes in patterns.items():
             for pattern in regexes:
-                count = len(re.findall(pattern, text))
-                fm.http_endpoints[method] += count
+                fm.http_endpoints[method] += len(re.findall(pattern, text))
 
     @staticmethod
     def _count_db_entities(text: str) -> int:
@@ -907,7 +1487,10 @@ class IfpugReport:
     internal_logical_files: int
     external_interface_files: int
     function_points: int
-    details: Dict[str, int]
+    supporting_metrics: Dict[str, int]
+    ilf_details: List[LogicalFileDetail]
+    eif_details: List[LogicalFileDetail]
+    transaction_details: Dict[str, List[TransactionDetail]]
 
 
 class IfpugEstimator:
@@ -919,6 +1502,10 @@ class IfpugEstimator:
 
     def estimate(self, metrics: Sequence[FileMetrics]) -> IfpugReport:
         aggregated = FileMetrics(path=Path("<aggregate>"))
+        ilf_map: Dict[str, LogicalFileDetail] = {}
+        eif_map: Dict[str, LogicalFileDetail] = {}
+        transactions: List[TransactionDetail] = []
+        seen_transactions: Set[Tuple[Path, int, str, str]] = set()
         for fm in metrics:
             aggregated.lines_of_code += fm.lines_of_code
             aggregated.function_defs += fm.function_defs
@@ -931,12 +1518,67 @@ class IfpugEstimator:
             aggregated.output_functions += fm.output_functions
             for method, count in fm.http_endpoints.items():
                 aggregated.http_endpoints[method] += count
+            for logical in fm.logical_files:
+                target = ilf_map if logical.kind.upper() == "ILF" else eif_map
+                self._merge_logical_detail(target, logical)
+            for func in fm.transaction_functions:
+                key = (func.file, func.line, func.name, func.kind)
+                if key in seen_transactions:
+                    continue
+                seen_transactions.add(key)
+                transactions.append(
+                    TransactionDetail(
+                        name=func.name,
+                        kind=func.kind,
+                        file=func.file,
+                        line=func.line,
+                        dets=list(func.dets),
+                        det_elements=list(func.det_elements),
+                        ftrs=list(func.ftrs),
+                        ftr_details=list(func.ftr_details),
+                        code_body=func.code_body,
+                    )
+                )
 
-        external_inputs = aggregated.input_functions + aggregated.http_endpoints["post"] + aggregated.http_endpoints["put"] + aggregated.http_endpoints["patch"] + aggregated.http_endpoints["delete"]
-        external_outputs = aggregated.output_functions + aggregated.http_endpoints["get"]
-        external_inquiries = aggregated.query_functions
-        internal_logical_files = max(aggregated.db_entities, 0)
-        external_interface_files = max(aggregated.external_calls // 2, 0)
+        logical_catalog = list(ilf_map.values()) + list(eif_map.values())
+        for func in transactions:
+            references: List[str] = []
+            reference_details: List[ReferenceDetail] = []
+            body = func.code_body or ""
+            for logical in logical_catalog:
+                for token in logical.reference_tokens:
+                    if not token:
+                        continue
+                    if re.search(r"\b" + re.escape(token) + r"\b", body):
+                        display_name = logical.name or logical.source or str(logical.file)
+                        references.append(display_name)
+                        reference_details.append(
+                            ReferenceDetail(
+                                name=display_name,
+                                kind=logical.kind,
+                                file=logical.file,
+                                line=logical.line,
+                                source=logical.source,
+                            )
+                        )
+                        break
+            func.ftrs = _unique_ordered(references)
+            deduped_refs: Dict[Tuple[str, Path, int], ReferenceDetail] = {}
+            for detail in reference_details:
+                key = (detail.name.lower(), detail.file, detail.line)
+                if key not in deduped_refs:
+                    deduped_refs[key] = detail
+            func.ftr_details = list(deduped_refs.values())
+
+        transaction_groups: Dict[str, List[TransactionDetail]] = {"EI": [], "EO": [], "EQ": []}
+        for func in transactions:
+            transaction_groups.setdefault(func.kind, []).append(func)
+
+        external_inputs = len(transaction_groups.get("EI", []))
+        external_outputs = len(transaction_groups.get("EO", []))
+        external_inquiries = len(transaction_groups.get("EQ", []))
+        internal_logical_files = len(ilf_map)
+        external_interface_files = len(eif_map)
 
         function_points = (
             external_inputs * self.EI_WEIGHT
@@ -946,7 +1588,7 @@ class IfpugEstimator:
             + external_interface_files * self.EIF_WEIGHT
         )
 
-        details = {
+        supporting_metrics = {
             "lines_of_code": aggregated.lines_of_code,
             "function_defs": aggregated.function_defs,
             "class_defs": aggregated.class_defs,
@@ -961,6 +1603,7 @@ class IfpugEstimator:
             "input_functions": aggregated.input_functions,
             "output_functions": aggregated.output_functions,
             "query_functions": aggregated.query_functions,
+            "transaction_functions": len(transactions),
         }
 
         return IfpugReport(
@@ -970,8 +1613,64 @@ class IfpugEstimator:
             internal_logical_files=internal_logical_files,
             external_interface_files=external_interface_files,
             function_points=function_points,
-            details=details,
+            supporting_metrics=supporting_metrics,
+            ilf_details=list(ilf_map.values()),
+            eif_details=list(eif_map.values()),
+            transaction_details=transaction_groups,
         )
+
+    @staticmethod
+    def _merge_logical_detail(target: Dict[str, LogicalFileDetail], detail: LogicalFileDetail) -> None:
+        key = (detail.name or f"{detail.file}:{detail.line}:{detail.kind}").lower()
+        existing = target.get(key)
+        if not existing:
+            target[key] = LogicalFileDetail(
+                name=detail.name,
+                kind=detail.kind,
+                file=detail.file,
+                line=detail.line,
+                dets=list(detail.dets),
+                rets=list(detail.rets),
+                det_elements=list(detail.det_elements),
+                ret_elements=list(detail.ret_elements),
+                source=detail.source,
+                code_preview=detail.code_preview,
+                reference_tokens=list(detail.reference_tokens),
+            )
+            return
+
+        existing.dets = _unique_ordered(existing.dets + list(detail.dets))
+        existing.rets = _unique_ordered(existing.rets + list(detail.rets))
+        existing.det_elements = self._merge_element_lists(existing.det_elements, detail.det_elements)
+        existing.ret_elements = self._merge_element_lists(existing.ret_elements, detail.ret_elements)
+        existing.reference_tokens = _unique_ordered(existing.reference_tokens + list(detail.reference_tokens))
+
+        if detail.code_preview:
+            existing_lines = existing.code_preview.splitlines() if existing.code_preview else []
+            combined = existing_lines + detail.code_preview.splitlines()
+            existing.code_preview = _trim_preview(combined)
+
+        if detail.source:
+            sources = existing.source.split(" | ") if existing.source else []
+            sources.append(detail.source)
+            existing.source = " | ".join(_unique_ordered(sources))
+
+        if not existing.name and detail.name:
+            existing.name = detail.name
+        if existing.line == 0:
+            existing.line = detail.line
+
+    @staticmethod
+    def _merge_element_lists(current: List[ElementDetail], new_elements: Sequence[ElementDetail]) -> List[ElementDetail]:
+        merged: List[ElementDetail] = list(current)
+        seen = {(elem.name.lower(), elem.line) for elem in current}
+        for element in new_elements:
+            key = (element.name.lower(), element.line)
+            if key in seen:
+                continue
+            seen.add(key)
+            merged.append(element)
+        return merged
 
 
 # ---------------------------------------------------------------------------
@@ -1027,8 +1726,97 @@ def format_ifpug(report: IfpugReport) -> str:
     lines.append(f"- External Interface Files (EIF): {report.external_interface_files}")
     lines.append(f"- Estimated Function Points: {report.function_points}")
     lines.append("Supporting metrics:")
-    for key, value in sorted(report.details.items()):
+    for key, value in sorted(report.supporting_metrics.items()):
         lines.append(f"  * {key}: {value}")
+
+    if report.ilf_details:
+        lines.append("Detailed ILF breakdown:")
+        for detail in report.ilf_details:
+            det_count = len(detail.dets)
+            ret_count = len(detail.rets)
+            lines.append(
+                f"- [ILF] {detail.name or '<unnamed>'} ({detail.file}:{detail.line}) DET={det_count} RET={ret_count} source={detail.source}"
+            )
+            if detail.det_elements:
+                lines.append("    DETs:")
+                for element in detail.det_elements:
+                    code_part = f" -> {element.code}" if element.code else ""
+                    lines.append(f"      - {element.name} (line {element.line}){code_part}")
+            elif detail.dets:
+                lines.append(f"    DETs: {', '.join(detail.dets)}")
+            if detail.ret_elements:
+                lines.append("    RETs:")
+                for element in detail.ret_elements:
+                    code_part = f" -> {element.code}" if element.code else ""
+                    lines.append(f"      - {element.name} (line {element.line}){code_part}")
+            elif detail.rets:
+                lines.append(f"    RETs: {', '.join(detail.rets)}")
+            if detail.code_preview:
+                preview = detail.code_preview.replace("\n", "\n      ")
+                lines.append(f"    Code: {preview}")
+    else:
+        lines.append("Detailed ILF breakdown: (none)")
+
+    if report.eif_details:
+        lines.append("Detailed EIF breakdown:")
+        for detail in report.eif_details:
+            det_count = len(detail.dets)
+            ret_count = len(detail.rets)
+            lines.append(
+                f"- [EIF] {detail.name or '<unnamed>'} ({detail.file}:{detail.line}) DET={det_count} RET={ret_count} source={detail.source}"
+            )
+            if detail.det_elements:
+                lines.append("    DETs:")
+                for element in detail.det_elements:
+                    code_part = f" -> {element.code}" if element.code else ""
+                    lines.append(f"      - {element.name} (line {element.line}){code_part}")
+            elif detail.dets:
+                lines.append(f"    DETs: {', '.join(detail.dets)}")
+            if detail.ret_elements:
+                lines.append("    RETs:")
+                for element in detail.ret_elements:
+                    code_part = f" -> {element.code}" if element.code else ""
+                    lines.append(f"      - {element.name} (line {element.line}){code_part}")
+            elif detail.rets:
+                lines.append(f"    RETs: {', '.join(detail.rets)}")
+            if detail.code_preview:
+                preview = detail.code_preview.replace("\n", "\n      ")
+                lines.append(f"    Code: {preview}")
+    else:
+        lines.append("Detailed EIF breakdown: (none)")
+
+    for kind, label in (("EI", "External Inputs"), ("EO", "External Outputs"), ("EQ", "External Inquiries")):
+        entries = report.transaction_details.get(kind, [])
+        lines.append(f"{label} transaction details:")
+        if not entries:
+            lines.append("  (none)")
+            continue
+        for entry in entries:
+            det_count = len(entry.dets)
+            ftr_count = len(entry.ftrs)
+            lines.append(
+                f"- [{kind}] {entry.name} ({entry.file}:{entry.line}) DET={det_count} FTR={ftr_count}"
+            )
+            if entry.det_elements:
+                lines.append("    DETs:")
+                for element in entry.det_elements:
+                    code_part = f" -> {element.code}" if element.code else ""
+                    lines.append(f"      - {element.name} (line {element.line}){code_part}")
+            elif entry.dets:
+                lines.append(f"    DETs: {', '.join(entry.dets)}")
+            if entry.ftr_details:
+                lines.append("    FTRs:")
+                for detail in entry.ftr_details:
+                    source_part = f", source={detail.source}" if detail.source else ""
+                    lines.append(
+                        f"      - {detail.name} [{detail.kind}] ({detail.file}:{detail.line}){source_part}"
+                    )
+            elif entry.ftrs:
+                lines.append(f"    FTRs: {', '.join(entry.ftrs)}")
+            if entry.code_body:
+                preview = _trim_preview(entry.code_body.splitlines()).replace("\n", "\n      ")
+                if preview:
+                    lines.append(f"    Code: {preview}")
     return "\n".join(lines)
 
 
@@ -1091,7 +1879,83 @@ def run_analysis(root: Path) -> Dict[str, object]:
             "internal_logical_files": ifpug_report.internal_logical_files,
             "external_interface_files": ifpug_report.external_interface_files,
             "function_points": ifpug_report.function_points,
-            "details": ifpug_report.details,
+            "supporting_metrics": ifpug_report.supporting_metrics,
+            "ilf_details": [
+                {
+                    "name": detail.name,
+                    "kind": detail.kind,
+                    "file": str(detail.file),
+                    "line": detail.line,
+                    "det_count": len(detail.dets),
+                    "ret_count": len(detail.rets),
+                    "dets": detail.dets,
+                    "rets": detail.rets,
+                    "det_elements": [
+                        {"name": element.name, "line": element.line, "code": element.code}
+                        for element in detail.det_elements
+                    ],
+                    "ret_elements": [
+                        {"name": element.name, "line": element.line, "code": element.code}
+                        for element in detail.ret_elements
+                    ],
+                    "source": detail.source,
+                    "code_preview": detail.code_preview,
+                }
+                for detail in ifpug_report.ilf_details
+            ],
+            "eif_details": [
+                {
+                    "name": detail.name,
+                    "kind": detail.kind,
+                    "file": str(detail.file),
+                    "line": detail.line,
+                    "det_count": len(detail.dets),
+                    "ret_count": len(detail.rets),
+                    "dets": detail.dets,
+                    "rets": detail.rets,
+                    "det_elements": [
+                        {"name": element.name, "line": element.line, "code": element.code}
+                        for element in detail.det_elements
+                    ],
+                    "ret_elements": [
+                        {"name": element.name, "line": element.line, "code": element.code}
+                        for element in detail.ret_elements
+                    ],
+                    "source": detail.source,
+                    "code_preview": detail.code_preview,
+                }
+                for detail in ifpug_report.eif_details
+            ],
+            "transactions": {
+                kind: [
+                    {
+                        "name": txn.name,
+                        "file": str(txn.file),
+                        "line": txn.line,
+                        "det_count": len(txn.dets),
+                        "ftr_count": len(txn.ftrs),
+                        "dets": txn.dets,
+                        "ftrs": txn.ftrs,
+                        "det_elements": [
+                            {"name": element.name, "line": element.line, "code": element.code}
+                            for element in txn.det_elements
+                        ],
+                        "ftr_details": [
+                            {
+                                "name": ref.name,
+                                "kind": ref.kind,
+                                "file": str(ref.file),
+                                "line": ref.line,
+                                "source": ref.source,
+                            }
+                            for ref in txn.ftr_details
+                        ],
+                        "code_preview": _trim_preview(txn.code_body.splitlines()),
+                    }
+                    for txn in ifpug_report.transaction_details.get(kind, [])
+                ]
+                for kind in ("EI", "EO", "EQ")
+            },
         },
     }
 
@@ -1134,7 +1998,73 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                     internal_logical_files=report["ifpug"]["internal_logical_files"],
                     external_interface_files=report["ifpug"]["external_interface_files"],
                     function_points=report["ifpug"]["function_points"],
-                    details=report["ifpug"]["details"],
+                    supporting_metrics=report["ifpug"]["supporting_metrics"],
+                    ilf_details=[
+                        LogicalFileDetail(
+                            name=item["name"],
+                            kind=item["kind"],
+                            file=Path(item["file"]),
+                            line=item["line"],
+                            dets=item["dets"],
+                            rets=item["rets"],
+                            det_elements=[
+                                ElementDetail(**element) for element in item.get("det_elements", [])
+                            ],
+                            ret_elements=[
+                                ElementDetail(**element) for element in item.get("ret_elements", [])
+                            ],
+                            source=item["source"],
+                            code_preview=item["code_preview"],
+                        )
+                        for item in report["ifpug"]["ilf_details"]
+                    ],
+                    eif_details=[
+                        LogicalFileDetail(
+                            name=item["name"],
+                            kind=item["kind"],
+                            file=Path(item["file"]),
+                            line=item["line"],
+                            dets=item["dets"],
+                            rets=item["rets"],
+                            det_elements=[
+                                ElementDetail(**element) for element in item.get("det_elements", [])
+                            ],
+                            ret_elements=[
+                                ElementDetail(**element) for element in item.get("ret_elements", [])
+                            ],
+                            source=item["source"],
+                            code_preview=item["code_preview"],
+                        )
+                        for item in report["ifpug"]["eif_details"]
+                    ],
+                    transaction_details={
+                        kind: [
+                            TransactionDetail(
+                                name=txn["name"],
+                                kind=kind,
+                                file=Path(txn["file"]),
+                                line=txn["line"],
+                                dets=txn["dets"],
+                                det_elements=[
+                                    ElementDetail(**element) for element in txn.get("det_elements", [])
+                                ],
+                                ftrs=txn["ftrs"],
+                                ftr_details=[
+                                    ReferenceDetail(
+                                        name=ref["name"],
+                                        kind=ref["kind"],
+                                        file=Path(ref["file"]),
+                                        line=ref["line"],
+                                        source=ref.get("source", ""),
+                                    )
+                                    for ref in txn.get("ftr_details", [])
+                                ],
+                                code_body=txn["code_preview"],
+                            )
+                            for txn in report["ifpug"]["transactions"].get(kind, [])
+                        ]
+                        for kind in ("EI", "EO", "EQ")
+                    },
                 )
             ),
         ]
