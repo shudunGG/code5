@@ -1,0 +1,14 @@
+# Go build artifacts
+bin/
+*.test
+
+# Python virtualenv
+.venv/
+__pycache__/
+
+# Node modules (future front-end)
+node_modules/
+
+# IDE metadata
+.vscode/
+.idea/
