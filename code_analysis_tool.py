@@ -829,22 +829,6 @@ def _unique_ordered(items: Iterable[str]) -> List[str]:
 
 
 @dataclass
-class ElementDetail:
-    name: str
-    line: int
-    code: str = ""
-
-
-@dataclass
-class ReferenceDetail:
-    name: str
-    kind: str
-    file: Path
-    line: int
-    source: str = ""
-
-
-@dataclass
 class LogicalFileDetail:
     name: str
     kind: str  # ILF or EIF
@@ -852,8 +836,6 @@ class LogicalFileDetail:
     line: int
     dets: List[str] = field(default_factory=list)
     rets: List[str] = field(default_factory=list)
-    det_elements: List[ElementDetail] = field(default_factory=list)
-    ret_elements: List[ElementDetail] = field(default_factory=list)
     source: str = ""
     code_preview: str = ""
     reference_tokens: List[str] = field(default_factory=list)
@@ -866,9 +848,7 @@ class TransactionDetail:
     file: Path
     line: int
     dets: List[str] = field(default_factory=list)
-    det_elements: List[ElementDetail] = field(default_factory=list)
     ftrs: List[str] = field(default_factory=list)
-    ftr_details: List[ReferenceDetail] = field(default_factory=list)
     code_body: str = ""
 
 
@@ -985,24 +965,17 @@ class MetricsCollector:
                 continue
             line_no = _line_number_from_index(text, match.start())
             indent = len(match.group("indent"))
-            body_entries = self._collect_indented_block(lines, line_no, indent)
-            body_text = "\n".join(entry[1] for entry in body_entries)
+            body_lines = self._collect_indented_block(lines, line_no, indent)
+            body_text = "\n".join(body_lines)
             params = self._split_parameters(match.group("params"))
-            signature_code = lines[line_no - 1].strip() if 0 <= line_no - 1 < len(lines) else ""
-            det_elements = self._derive_det_elements(
-                params,
-                signature_line=line_no,
-                signature_code=signature_code,
-                body_entries=body_entries,
-            )
+            dets = self._derive_det_candidates(params, body_text)
             details.append(
                 TransactionDetail(
                     name=name,
                     kind=kind,
                     file=path,
                     line=line_no,
-                    dets=[element.name for element in det_elements],
-                    det_elements=det_elements,
+                    dets=dets,
                     code_body=body_text,
                 )
             )
@@ -1010,7 +983,6 @@ class MetricsCollector:
 
     def _extract_js_functions(self, path: Path, text: str) -> List[TransactionDetail]:
         details: List[TransactionDetail] = []
-        lines = text.splitlines()
         patterns = [
             re.compile(r"(?:async\s+)?function\s+(?P<name>\w+)\s*\((?P<params>[^)]*)\)\s*\{", re.MULTILINE),
             re.compile(r"(?:const|let|var)\s+(?P<name>\w+)\s*=\s*(?:async\s+)?\((?P<params>[^)]*)\)\s*=>\s*\{", re.MULTILINE),
@@ -1027,22 +999,14 @@ class MetricsCollector:
                 body_text, _ = self._extract_brace_block(text, brace_index)
                 line_no = _line_number_from_index(text, match.start())
                 params = self._split_parameters(match.group("params"))
-                signature_code = lines[line_no - 1].strip() if 0 <= line_no - 1 < len(lines) else ""
-                body_entries = self._collect_block_from_text(text, brace_index)
-                det_elements = self._derive_det_elements(
-                    params,
-                    signature_line=line_no,
-                    signature_code=signature_code,
-                    body_entries=body_entries,
-                )
+                dets = self._derive_det_candidates(params, body_text)
                 details.append(
                     TransactionDetail(
                         name=name,
                         kind=kind,
                         file=path,
                         line=line_no,
-                        dets=[element.name for element in det_elements],
-                        det_elements=det_elements,
+                        dets=dets,
                         code_body=body_text,
                     )
                 )
@@ -1050,7 +1014,6 @@ class MetricsCollector:
 
     def _extract_c_like_functions(self, path: Path, text: str) -> List[TransactionDetail]:
         details: List[TransactionDetail] = []
-        lines = text.splitlines()
         pattern = re.compile(
             r"(?P<signature>\b(?:public|protected|private|internal|static|final|synchronized|async|override|virtual|abstract|suspend|inline|constexpr|template<[^>]+>\s+|[\w\[\]<>]+?\s+)+)"
             r"(?P<name>[A-Za-z_][A-Za-z0-9_]*)\s*\((?P<params>[^)]*)\)\s*\{",
@@ -1067,22 +1030,14 @@ class MetricsCollector:
             body_text, _ = self._extract_brace_block(text, brace_index)
             line_no = _line_number_from_index(text, match.start())
             params = self._split_parameters(match.group("params"))
-            signature_code = lines[line_no - 1].strip() if 0 <= line_no - 1 < len(lines) else ""
-            body_entries = self._collect_block_from_text(text, brace_index)
-            det_elements = self._derive_det_elements(
-                params,
-                signature_line=line_no,
-                signature_code=signature_code,
-                body_entries=body_entries,
-            )
+            dets = self._derive_det_candidates(params, body_text)
             details.append(
                 TransactionDetail(
                     name=name,
                     kind=kind,
                     file=path,
                     line=line_no,
-                    dets=[element.name for element in det_elements],
-                    det_elements=det_elements,
+                    dets=dets,
                     code_body=body_text,
                 )
             )
@@ -1113,68 +1068,35 @@ class MetricsCollector:
             params.append(token)
         return params
 
-    def _derive_det_elements(
-        self,
-        parameters: List[str],
-        signature_line: int,
-        signature_code: str,
-        body_entries: List[Tuple[int, str]],
-    ) -> List[ElementDetail]:
-        seen: Set[str] = set()
-
-        def _should_include(name: str) -> bool:
-            return bool(name) and name not in self.IGNORED_DET_NAMES
-
-        def _key(name: str) -> str:
-            return name.lower()
-
-        dets: List[ElementDetail] = []
+    def _derive_det_candidates(self, parameters: List[str], body: str) -> List[str]:
+        dets: List[str] = []
         for param in parameters:
-            if _should_include(param):
-                key = _key(param)
-                if key not in seen:
-                    seen.add(key)
-                    dets.append(ElementDetail(name=param, line=signature_line, code=signature_code))
-
-        string_key_pattern = re.compile(r"[\"']([A-Za-z0-9_]+)[\"']\s*:")
-        getter_pattern = re.compile(r"\.get\(['\"]([A-Za-z0-9_]+)['\"]\)")
-        assignment_pattern = re.compile(r"\b([A-Za-z_][A-Za-z0-9_]*)\s*=")
-
-        for line_no, line_text in body_entries:
-            for regex in (string_key_pattern, getter_pattern, assignment_pattern):
-                for match in regex.finditer(line_text):
-                    name = match.group(1)
-                    if not _should_include(name):
-                        continue
-                    key = _key(name)
-                    if key in seen:
-                        continue
-                    seen.add(key)
-                    dets.append(ElementDetail(name=name, line=line_no, code=line_text.strip()))
-        return dets
+            if param and param not in self.IGNORED_DET_NAMES:
+                dets.append(param)
+        for key in re.findall(r"[\"']([A-Za-z0-9_]+)[\"']\s*:", body):
+            if key not in self.IGNORED_DET_NAMES:
+                dets.append(key)
+        for key in re.findall(r"\.get\(['\"]([A-Za-z0-9_]+)['\"]\)", body):
+            if key not in self.IGNORED_DET_NAMES:
+                dets.append(key)
+        for key in re.findall(r"\b([A-Za-z_][A-Za-z0-9_]*)\s*=", body):
+            if key not in self.IGNORED_DET_NAMES:
+                dets.append(key)
+        return _unique_ordered(dets)
 
     @staticmethod
-    def _collect_indented_block(lines: List[str], start_line: int, base_indent: int) -> List[Tuple[int, str]]:
-        block: List[Tuple[int, str]] = []
+    def _collect_indented_block(lines: List[str], start_line: int, base_indent: int) -> List[str]:
+        block: List[str] = []
         for idx in range(start_line, len(lines)):
             line = lines[idx]
             if not line.strip():
-                block.append((idx + 1, line))
+                block.append(line)
                 continue
             indent = len(line) - len(line.lstrip())
             if indent <= base_indent:
                 break
-            block.append((idx + 1, line))
+            block.append(line)
         return block
-
-    @staticmethod
-    def _collect_block_from_text(text: str, brace_index: int) -> List[Tuple[int, str]]:
-        body_text, _ = MetricsCollector._extract_brace_block(text, brace_index)
-        start_line = _line_number_from_index(text, brace_index)
-        entries: List[Tuple[int, str]] = []
-        for offset, raw_line in enumerate(body_text.splitlines()):
-            entries.append((start_line + offset, raw_line))
-        return entries
 
     @staticmethod
     def _extract_brace_block(text: str, brace_start: int) -> Tuple[str, int]:
@@ -1214,7 +1136,6 @@ class MetricsCollector:
 
     def _extract_sql_tables(self, path: Path, text: str) -> List[LogicalFileDetail]:
         details: List[LogicalFileDetail] = []
-        lines = text.splitlines()
         pattern = re.compile(r"CREATE\s+TABLE\s+(?:IF\s+NOT\s+EXISTS\s+)?[`\"\[]?(?P<name>[A-Za-z0-9_]+)[`\"\]]?", re.IGNORECASE)
         for match in pattern.finditer(text):
             paren_index = text.find("(", match.end())
@@ -1222,17 +1143,10 @@ class MetricsCollector:
                 continue
             body, end_index = self._extract_parenthesis_block(text, paren_index)
             table_name = _normalize_identifier(match.group("name"))
-            column_start_line = _line_number_from_index(text, paren_index)
-            det_elements = self._parse_columns_from_sql(body, column_start_line)
-            dets = [element.name for element in det_elements]
+            dets = self._parse_columns_from_sql(body)
             line_no = _line_number_from_index(text, match.start())
             preview = _trim_preview(text[match.start():end_index].splitlines())
             reference = _unique_ordered([table_name] + dets)
-            ret_element = (
-                ElementDetail(name=table_name, line=line_no, code=lines[line_no - 1].strip())
-                if table_name and 0 <= line_no - 1 < len(lines)
-                else None
-            )
             details.append(
                 LogicalFileDetail(
                     name=table_name,
@@ -1241,8 +1155,6 @@ class MetricsCollector:
                     line=line_no,
                     dets=dets,
                     rets=[table_name] if table_name else [],
-                    det_elements=det_elements,
-                    ret_elements=[ret_element] if ret_element else [],
                     source="sql create table",
                     code_preview=preview,
                     reference_tokens=reference,
@@ -1250,10 +1162,9 @@ class MetricsCollector:
             )
         return details
 
-    def _parse_columns_from_sql(self, body: str, start_line: int) -> List[ElementDetail]:
-        dets: List[ElementDetail] = []
-        seen: Set[str] = set()
-        for offset, raw_line in enumerate(body.splitlines()):
+    def _parse_columns_from_sql(self, body: str) -> List[str]:
+        dets: List[str] = []
+        for raw_line in body.splitlines():
             line = raw_line.strip().rstrip(",")
             if not line:
                 continue
@@ -1262,62 +1173,27 @@ class MetricsCollector:
                 continue
             match = re.match(r"[`\"\[]?([A-Za-z0-9_]+)[`\"\]]?\s+", line)
             if match:
-                name = _normalize_identifier(match.group(1))
-                key = name.lower()
-                if key in seen:
-                    continue
-                seen.add(key)
-                dets.append(
-                    ElementDetail(
-                        name=name,
-                        line=start_line + offset,
-                        code=raw_line.strip(),
-                    )
-                )
-        return dets
+                dets.append(_normalize_identifier(match.group(1)))
+        return _unique_ordered(dets)
 
     def _extract_entity_classes(self, path: Path, text: str) -> List[LogicalFileDetail]:
         details: List[LogicalFileDetail] = []
         pattern = re.compile(r"@Entity[^\n]*\n(?:\s*@\w+[^\n]*\n)*\s*(?:public|protected|private)?\s*class\s+(?P<name>\w+)\s*\{", re.MULTILINE)
-        lines = text.splitlines()
-        field_patterns = (
-            re.compile(r"(?:private|protected|public)\s+[A-Za-z0-9_<>,\[\]]+\s+([A-Za-z0-9_]+)\s*(?:=|;)"),
-            re.compile(r"\b(?:var|val)\s+([A-Za-z0-9_]+)\s*[:=]"),
-        )
         for match in pattern.finditer(text):
             brace_index = text.find("{", match.end() - 1)
             if brace_index == -1:
                 continue
             body_text, end_index = self._extract_brace_block(text, brace_index)
-            body_entries = self._collect_block_from_text(text, brace_index)
-            field_elements: List[ElementDetail] = []
-            seen: Set[str] = set()
-            for line_no, line_text in body_entries:
-                for regex in field_patterns:
-                    match_field = regex.search(line_text)
-                    if match_field:
-                        name = match_field.group(1)
-                        key = name.lower()
-                        if key in seen or name in self.IGNORED_DET_NAMES:
-                            continue
-                        seen.add(key)
-                        field_elements.append(
-                            ElementDetail(
-                                name=name,
-                                line=line_no,
-                                code=line_text.strip(),
-                            )
-                        )
-                        break
-            dets = [element.name for element in field_elements]
+            field_names: List[str] = []
+            field_names.extend(
+                re.findall(r"(?:private|protected|public)\s+[A-Za-z0-9_<>,\[\]]+\s+([A-Za-z0-9_]+)\s*(?:=|;)", body_text)
+            )
+            for kotlin_match in re.finditer(r"\b(?:var|val)\s+([A-Za-z0-9_]+)\s*[:=]", body_text):
+                field_names.append(kotlin_match.group(1))
+            dets = _unique_ordered(field_names)
             line_no = _line_number_from_index(text, match.start())
             preview = _trim_preview(text[match.start():end_index].splitlines())
             class_name = match.group("name")
-            ret_element = ElementDetail(
-                name=class_name,
-                line=line_no,
-                code=lines[line_no - 1].strip() if 0 <= line_no - 1 < len(lines) else "",
-            )
             details.append(
                 LogicalFileDetail(
                     name=class_name,
@@ -1326,8 +1202,6 @@ class MetricsCollector:
                     line=line_no,
                     dets=dets,
                     rets=[class_name],
-                    det_elements=field_elements,
-                    ret_elements=[ret_element],
                     source="entity class",
                     code_preview=preview,
                     reference_tokens=_unique_ordered([class_name] + dets),
@@ -1345,26 +1219,13 @@ class MetricsCollector:
             line_index = max(line_no - 1, 0)
             base_line = lines[line_index] if line_index < len(lines) else ""
             indent = len(base_line) - len(base_line.lstrip())
-            body_entries = self._collect_indented_block(lines, line_no, indent)
-            det_elements: List[ElementDetail] = []
-            seen: Set[str] = set()
-            for entry_line_no, line in body_entries:
+            body_lines = self._collect_indented_block(lines, line_no, indent)
+            dets: List[str] = []
+            for line in body_lines:
                 field_match = re.match(r"\s*([A-Za-z0-9_]+)\s*=\s*models\.", line)
                 if field_match:
-                    name = field_match.group(1)
-                    key = name.lower()
-                    if key in seen or name in self.IGNORED_DET_NAMES:
-                        continue
-                    seen.add(key)
-                    det_elements.append(
-                        ElementDetail(
-                            name=name,
-                            line=entry_line_no,
-                            code=line.strip(),
-                        )
-                    )
-            dets = [element.name for element in det_elements]
-            preview = _trim_preview(([base_line] if base_line else []) + [entry[1] for entry in body_entries])
+                    dets.append(field_match.group(1))
+            preview = _trim_preview(([base_line] if base_line else []) + body_lines)
             details.append(
                 LogicalFileDetail(
                     name=class_name,
@@ -1373,10 +1234,6 @@ class MetricsCollector:
                     line=line_no,
                     dets=_unique_ordered(dets),
                     rets=[class_name],
-                    det_elements=det_elements,
-                    ret_elements=[ElementDetail(name=class_name, line=line_no, code=base_line.strip())] if base_line else [
-                        ElementDetail(name=class_name, line=line_no, code="")
-                    ],
                     source="django model",
                     code_preview=preview,
                     reference_tokens=_unique_ordered([class_name] + dets),
@@ -1405,34 +1262,14 @@ class MetricsCollector:
                 name = f"{method_name.upper()} {display_target}"
                 line_no = _line_number_from_index(text, match.start())
                 segment = text[match.start() : match.start() + 200]
-                body_entries = []
-                segment_lines = segment.splitlines()
-                for offset, seg_line in enumerate(segment_lines):
-                    body_entries.append((line_no + offset, seg_line))
-                det_elements = self._derive_det_elements(
-                    [],
-                    signature_line=line_no,
-                    signature_code=segment_lines[0].strip() if segment_lines else "",
-                    body_entries=body_entries,
-                )
-                dets = [element.name for element in det_elements]
+                dets = self._derive_det_candidates([], segment)
                 if parsed.query:
                     for part in parsed.query.split("&"):
                         key = part.split("=")[0]
                         if key and key not in self.IGNORED_DET_NAMES:
-                            det_elements.append(
-                                ElementDetail(
-                                    name=key,
-                                    line=line_no,
-                                    code=f"queryparam:{key}",
-                                )
-                            )
                             dets.append(key)
                 preview = _trim_preview(segment.splitlines())
                 reference = _unique_ordered([host, path_part, path_part.split("/")[-1], url])
-                ret_elements = [
-                    ElementDetail(name=host or path_part, line=line_no, code=segment_lines[0].strip() if segment_lines else "")
-                ] if (host or path_part) else []
                 details.append(
                     LogicalFileDetail(
                         name=name,
@@ -1441,8 +1278,6 @@ class MetricsCollector:
                         line=line_no,
                         dets=_unique_ordered(dets),
                         rets=_unique_ordered([host or path_part, path_part]),
-                        det_elements=det_elements,
-                        ret_elements=ret_elements,
                         source=f"external call via {provider}",
                         code_preview=preview,
                         reference_tokens=[token for token in reference if token],
@@ -1533,9 +1368,7 @@ class IfpugEstimator:
                         file=func.file,
                         line=func.line,
                         dets=list(func.dets),
-                        det_elements=list(func.det_elements),
                         ftrs=list(func.ftrs),
-                        ftr_details=list(func.ftr_details),
                         code_body=func.code_body,
                     )
                 )
@@ -1543,32 +1376,15 @@ class IfpugEstimator:
         logical_catalog = list(ilf_map.values()) + list(eif_map.values())
         for func in transactions:
             references: List[str] = []
-            reference_details: List[ReferenceDetail] = []
             body = func.code_body or ""
             for logical in logical_catalog:
                 for token in logical.reference_tokens:
                     if not token:
                         continue
                     if re.search(r"\b" + re.escape(token) + r"\b", body):
-                        display_name = logical.name or logical.source or str(logical.file)
-                        references.append(display_name)
-                        reference_details.append(
-                            ReferenceDetail(
-                                name=display_name,
-                                kind=logical.kind,
-                                file=logical.file,
-                                line=logical.line,
-                                source=logical.source,
-                            )
-                        )
+                        references.append(logical.name or logical.source or str(logical.file))
                         break
             func.ftrs = _unique_ordered(references)
-            deduped_refs: Dict[Tuple[str, Path, int], ReferenceDetail] = {}
-            for detail in reference_details:
-                key = (detail.name.lower(), detail.file, detail.line)
-                if key not in deduped_refs:
-                    deduped_refs[key] = detail
-            func.ftr_details = list(deduped_refs.values())
 
         transaction_groups: Dict[str, List[TransactionDetail]] = {"EI": [], "EO": [], "EQ": []}
         for func in transactions:
@@ -1631,8 +1447,6 @@ class IfpugEstimator:
                 line=detail.line,
                 dets=list(detail.dets),
                 rets=list(detail.rets),
-                det_elements=list(detail.det_elements),
-                ret_elements=list(detail.ret_elements),
                 source=detail.source,
                 code_preview=detail.code_preview,
                 reference_tokens=list(detail.reference_tokens),
@@ -1641,8 +1455,6 @@ class IfpugEstimator:
 
         existing.dets = _unique_ordered(existing.dets + list(detail.dets))
         existing.rets = _unique_ordered(existing.rets + list(detail.rets))
-        existing.det_elements = self._merge_element_lists(existing.det_elements, detail.det_elements)
-        existing.ret_elements = self._merge_element_lists(existing.ret_elements, detail.ret_elements)
         existing.reference_tokens = _unique_ordered(existing.reference_tokens + list(detail.reference_tokens))
 
         if detail.code_preview:
@@ -1659,18 +1471,6 @@ class IfpugEstimator:
             existing.name = detail.name
         if existing.line == 0:
             existing.line = detail.line
-
-    @staticmethod
-    def _merge_element_lists(current: List[ElementDetail], new_elements: Sequence[ElementDetail]) -> List[ElementDetail]:
-        merged: List[ElementDetail] = list(current)
-        seen = {(elem.name.lower(), elem.line) for elem in current}
-        for element in new_elements:
-            key = (element.name.lower(), element.line)
-            if key in seen:
-                continue
-            seen.add(key)
-            merged.append(element)
-        return merged
 
 
 # ---------------------------------------------------------------------------
@@ -1737,19 +1537,9 @@ def format_ifpug(report: IfpugReport) -> str:
             lines.append(
                 f"- [ILF] {detail.name or '<unnamed>'} ({detail.file}:{detail.line}) DET={det_count} RET={ret_count} source={detail.source}"
             )
-            if detail.det_elements:
-                lines.append("    DETs:")
-                for element in detail.det_elements:
-                    code_part = f" -> {element.code}" if element.code else ""
-                    lines.append(f"      - {element.name} (line {element.line}){code_part}")
-            elif detail.dets:
+            if detail.dets:
                 lines.append(f"    DETs: {', '.join(detail.dets)}")
-            if detail.ret_elements:
-                lines.append("    RETs:")
-                for element in detail.ret_elements:
-                    code_part = f" -> {element.code}" if element.code else ""
-                    lines.append(f"      - {element.name} (line {element.line}){code_part}")
-            elif detail.rets:
+            if detail.rets:
                 lines.append(f"    RETs: {', '.join(detail.rets)}")
             if detail.code_preview:
                 preview = detail.code_preview.replace("\n", "\n      ")
@@ -1765,19 +1555,9 @@ def format_ifpug(report: IfpugReport) -> str:
             lines.append(
                 f"- [EIF] {detail.name or '<unnamed>'} ({detail.file}:{detail.line}) DET={det_count} RET={ret_count} source={detail.source}"
             )
-            if detail.det_elements:
-                lines.append("    DETs:")
-                for element in detail.det_elements:
-                    code_part = f" -> {element.code}" if element.code else ""
-                    lines.append(f"      - {element.name} (line {element.line}){code_part}")
-            elif detail.dets:
+            if detail.dets:
                 lines.append(f"    DETs: {', '.join(detail.dets)}")
-            if detail.ret_elements:
-                lines.append("    RETs:")
-                for element in detail.ret_elements:
-                    code_part = f" -> {element.code}" if element.code else ""
-                    lines.append(f"      - {element.name} (line {element.line}){code_part}")
-            elif detail.rets:
+            if detail.rets:
                 lines.append(f"    RETs: {', '.join(detail.rets)}")
             if detail.code_preview:
                 preview = detail.code_preview.replace("\n", "\n      ")
@@ -1797,21 +1577,9 @@ def format_ifpug(report: IfpugReport) -> str:
             lines.append(
                 f"- [{kind}] {entry.name} ({entry.file}:{entry.line}) DET={det_count} FTR={ftr_count}"
             )
-            if entry.det_elements:
-                lines.append("    DETs:")
-                for element in entry.det_elements:
-                    code_part = f" -> {element.code}" if element.code else ""
-                    lines.append(f"      - {element.name} (line {element.line}){code_part}")
-            elif entry.dets:
+            if entry.dets:
                 lines.append(f"    DETs: {', '.join(entry.dets)}")
-            if entry.ftr_details:
-                lines.append("    FTRs:")
-                for detail in entry.ftr_details:
-                    source_part = f", source={detail.source}" if detail.source else ""
-                    lines.append(
-                        f"      - {detail.name} [{detail.kind}] ({detail.file}:{detail.line}){source_part}"
-                    )
-            elif entry.ftrs:
+            if entry.ftrs:
                 lines.append(f"    FTRs: {', '.join(entry.ftrs)}")
             if entry.code_body:
                 preview = _trim_preview(entry.code_body.splitlines()).replace("\n", "\n      ")
@@ -1890,14 +1658,6 @@ def run_analysis(root: Path) -> Dict[str, object]:
                     "ret_count": len(detail.rets),
                     "dets": detail.dets,
                     "rets": detail.rets,
-                    "det_elements": [
-                        {"name": element.name, "line": element.line, "code": element.code}
-                        for element in detail.det_elements
-                    ],
-                    "ret_elements": [
-                        {"name": element.name, "line": element.line, "code": element.code}
-                        for element in detail.ret_elements
-                    ],
                     "source": detail.source,
                     "code_preview": detail.code_preview,
                 }
@@ -1913,14 +1673,6 @@ def run_analysis(root: Path) -> Dict[str, object]:
                     "ret_count": len(detail.rets),
                     "dets": detail.dets,
                     "rets": detail.rets,
-                    "det_elements": [
-                        {"name": element.name, "line": element.line, "code": element.code}
-                        for element in detail.det_elements
-                    ],
-                    "ret_elements": [
-                        {"name": element.name, "line": element.line, "code": element.code}
-                        for element in detail.ret_elements
-                    ],
                     "source": detail.source,
                     "code_preview": detail.code_preview,
                 }
@@ -1936,20 +1688,6 @@ def run_analysis(root: Path) -> Dict[str, object]:
                         "ftr_count": len(txn.ftrs),
                         "dets": txn.dets,
                         "ftrs": txn.ftrs,
-                        "det_elements": [
-                            {"name": element.name, "line": element.line, "code": element.code}
-                            for element in txn.det_elements
-                        ],
-                        "ftr_details": [
-                            {
-                                "name": ref.name,
-                                "kind": ref.kind,
-                                "file": str(ref.file),
-                                "line": ref.line,
-                                "source": ref.source,
-                            }
-                            for ref in txn.ftr_details
-                        ],
                         "code_preview": _trim_preview(txn.code_body.splitlines()),
                     }
                     for txn in ifpug_report.transaction_details.get(kind, [])
@@ -2007,12 +1745,6 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                             line=item["line"],
                             dets=item["dets"],
                             rets=item["rets"],
-                            det_elements=[
-                                ElementDetail(**element) for element in item.get("det_elements", [])
-                            ],
-                            ret_elements=[
-                                ElementDetail(**element) for element in item.get("ret_elements", [])
-                            ],
                             source=item["source"],
                             code_preview=item["code_preview"],
                         )
@@ -2026,12 +1758,6 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                             line=item["line"],
                             dets=item["dets"],
                             rets=item["rets"],
-                            det_elements=[
-                                ElementDetail(**element) for element in item.get("det_elements", [])
-                            ],
-                            ret_elements=[
-                                ElementDetail(**element) for element in item.get("ret_elements", [])
-                            ],
                             source=item["source"],
                             code_preview=item["code_preview"],
                         )
@@ -2045,20 +1771,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                                 file=Path(txn["file"]),
                                 line=txn["line"],
                                 dets=txn["dets"],
-                                det_elements=[
-                                    ElementDetail(**element) for element in txn.get("det_elements", [])
-                                ],
                                 ftrs=txn["ftrs"],
-                                ftr_details=[
-                                    ReferenceDetail(
-                                        name=ref["name"],
-                                        kind=ref["kind"],
-                                        file=Path(ref["file"]),
-                                        line=ref["line"],
-                                        source=ref.get("source", ""),
-                                    )
-                                    for ref in txn.get("ftr_details", [])
-                                ],
                                 code_body=txn["code_preview"],
                             )
                             for txn in report["ifpug"]["transactions"].get(kind, [])
