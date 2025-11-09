@@ -1,0 +1,15 @@
+id: R-201
+name: "跨链供给不一致"
+severity: HIGH
+scope: project
+when:
+  - metric: supply_diff_ratio
+    op: ">"
+    value: 0.02
+    window: "5m"
+evidence:
+  - type: "timeseries"
+    ref: "supply_snapshot.*"
+action:
+  - emit_alert: true
+    tags: ["supply", "crosschain"]

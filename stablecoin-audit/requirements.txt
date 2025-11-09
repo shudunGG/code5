@@ -1,0 +1,3 @@
+# Python analytics dependencies placeholder
+numpy
+pandas
